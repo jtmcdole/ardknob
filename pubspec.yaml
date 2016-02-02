@@ -1,0 +1,13 @@
+name: ardknob 
+description: Arduino Knob and 128x64 OLED display application 
+dependencies:
+  serial_port: any
+dev_dependencies:
+  ansicolor: "^0.0.9"
+  ccompile: "^0.2.10"
+  coverage: "^0.7.2"
+  logging: "^0.11.2"
+  mockito: "^0.11.0"
+  path: "^1.3.9"
+  quiver: "^0.21.4"
+  test: "^0.12.6+2"
