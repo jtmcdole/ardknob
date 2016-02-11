@@ -17,9 +17,11 @@ library ardknob.all_tests;
 import 'ardproto_test.dart' as ardproto;
 import 'display_test.dart' as display;
 import 'pages_test.dart' as pages;
+import 'flightgear_test.dart' as flightgear;
 
 main() {
   ardproto.main();
   display.main();
   pages.main();
+  flightgear.main();
 }
