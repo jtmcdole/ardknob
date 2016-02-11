@@ -14,9 +14,9 @@
 
 library ardknob.all_tests;
 
-import 'ardproto/ardproto_test.dart' as ardproto;
-import 'display/display_test.dart' as display;
-import 'pages/pages_test.dart' as pages;
+import 'ardproto_test.dart' as ardproto;
+import 'display_test.dart' as display;
+import 'pages_test.dart' as pages;
 
 main() {
   ardproto.main();
