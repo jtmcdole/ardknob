@@ -41,9 +41,7 @@ class Program {
             }
           }
         }
-
-      } catch (e) {
-      }
+      } catch (e) {}
     });
 
     ProjectBuilder.logger = logger;

@@ -58,16 +58,17 @@ main(List<String> args) async {
         'filled rounted rect',
         (page) => page.display
             .rectangle(page.x, page.y, 40, 40, 1, radius: 8, fill: true)))
+    ..add(new DemoPage('circle',
+        (page) => page.display.circle(page.x + 20, page.y + 20, 20, 1)))
     ..add(new DemoPage(
-        'circle', (page) => page.display.circle(page.x + 20, page.y + 20, 20, 1)))
-    ..add(new DemoPage('filled circle',
-        (page) => page.display.circle(page.x + 20, page.y + 20, 20, 1, fill: true)))
+        'filled circle',
+        (page) =>
+            page.display.circle(page.x + 20, page.y + 20, 20, 1, fill: true)))
     ..add(new DemoPage(
         'triangle',
         (page) => page.display.triangle(page.x + 20, page.y, page.x,
             page.y + 20, page.x + 40, page.y + 20, 1)))
-    ..add(new DemoPage(
-        'filled triangle', (page) => page.display.triangle(page.x + 20, page.y, page.x, page.y + 20, page.x + 40, page.y + 20, 1, fill: true)))
+    ..add(new DemoPage('filled triangle', (page) => page.display.triangle(page.x + 20, page.y, page.x, page.y + 20, page.x + 40, page.y + 20, 1, fill: true)))
     ..add(new DemoPage('bitmap', (page) => page.display.bitmap(page.x, page.y, codefu_width, codefu_height, 1, codefu_bits, xmb: true)));
 
   await new Future.delayed(const Duration(milliseconds: 10), () {});
@@ -92,14 +93,16 @@ class DemoPage extends Page {
         x--;
       } else if (knob.direction == Direction.right) {
         x++;
-      } else return;
+      } else
+        return;
     }
     if (knob.id == 1) {
       if (knob.direction == Direction.left) {
         y--;
       } else if (knob.direction == Direction.right) {
         y++;
-      } else return;
+      } else
+        return;
     }
     doIt();
   }

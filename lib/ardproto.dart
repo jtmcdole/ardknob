@@ -105,9 +105,9 @@ class ArdProto {
   ///
   /// Completes the returned [Future] with success of this command.
   Future<bool> write(int command, [List<int> data = const <int>[]]) {
-    if (data.length > maxDataLength) return new Future.error(
-        new ArgumentError('Oversized $command write: '
-            '${data.length + packetOverhead} > $maxPacketSize'));
+    if (data.length > maxDataLength)
+      return new Future.error(new ArgumentError('Oversized $command write: '
+          '${data.length + packetOverhead} > $maxPacketSize'));
     data = [data.length + 5, (_ack++ & 0xFF), command]..addAll(data);
     int sum = fletcher16(data, data.length);
     int f0 = sum & 0xFF;
