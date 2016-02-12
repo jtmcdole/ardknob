@@ -37,6 +37,16 @@ main() {
               <foo>
                 <bar>baz</bar>
               </foo>'''), 'missing elements');
+        expectBoom(() => new Properties('''
+              <PropertyList>
+                <generic>
+                  <output>
+                    <chunk>
+                      <type>string</type>
+                    </chunk>
+                  </output>
+                </generic>
+              </PropertyList>'''), 'invalid type');
       });
       test('works with empty properties', () {
         var prop = new Properties('''
@@ -62,7 +72,7 @@ main() {
       <chunk>
         <name>Bar</name>
         <node>bar</node>
-        <type>string</type>
+        <type>int</type>
       </chunk>
     </output>
     <input>
@@ -108,7 +118,6 @@ main() {
       <chunk>
         <name>Bar</name>
         <node>bar</node>
-        <type>string</type>
       </chunk>
       <chunk>
         <name>Baz</name>
@@ -141,9 +150,9 @@ main() {
         expect(val, same(prop.outputs['foo']));
         count++;
       });
-      prop.parse(UTF8.encode('1;testing;1234;123.1234'));
+      prop.parse(UTF8.encode('1;2;1234;123.1234'));
       expect(prop['foo'].value, isTrue);
-      expect(prop['bar'].value, 'testing');
+      expect(prop['bar'].value, 2);
       expect(prop['baz'].value, 1234);
       expect(prop['qux'].value, 123.1234);
 
@@ -156,7 +165,7 @@ main() {
 
       prop.parse(UTF8.encode('t;codefu;asdf;asdf'));
       expect(prop['foo'].value, isFalse);
-      expect(prop['bar'].value, 'codefu');
+      expect(prop['bar'].value, 0);
       expect(prop['baz'].value, 0);
       expect(prop['qux'].value, 0.0);
 
@@ -169,7 +178,7 @@ main() {
 
       expect(count, 2, reason: 'async stream update even with error');
       expect(prop['foo'].value, isFalse);
-      expect(prop['bar'].value, 'codefu');
+      expect(prop['bar'].value, 0);
       expect(prop['baz'].value, 0);
       expect(prop['qux'].value, 0.0);
     });

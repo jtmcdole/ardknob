@@ -40,7 +40,7 @@ class Properties {
   /// String separator used between properties sent from ArdKnob.
   String in_separator;
 
-  /// All properties.
+  /// All properties parsed from the generic protocol.
   Map<String, Property> properties;
 
   /// Properties meant to be sent to FlightGear
@@ -49,6 +49,8 @@ class Properties {
   /// Properties sent from FlightGear.
   Map<String, Property> outputs;
 
+  /// Parses the [FlightGear Generic Protocol](http://wiki.flightgear.org/Generic_protocol)
+  /// passed in as an xml string.
   Properties(String generic) {
     var doc = xml.parse(generic);
     var gen =
@@ -78,12 +80,23 @@ class Properties {
               node = text;
               break;
             case 'type':
-              type = text;
+              switch (text) {
+                case 'int':
+                  type = PropertyType.int;
+                  break;
+                case 'float':
+                  type = PropertyType.float;
+                  break;
+                case 'bool':
+                  type = PropertyType.bool;
+                  break;
+                default:
+                  throw new UnimplementedError('$text is not implemented yet');
+              }
               break;
           }
         }
-        if (type == null) type = 'int';
-        nodes.add(new Property(name, node, type));
+        nodes.add(new Property(name, node, type ?? PropertyType.int));
       }
       return nodes;
     }
@@ -109,6 +122,10 @@ class Properties {
     properties = new Map<String, Property>.from(outputs)..addAll(inputs);
   }
 
+  /// Parse a line of data sent from FlightGear and update the [outputs]
+  ///
+  /// Changes to a [Property]'s state will be signaled through its broadcast
+  /// [Property.stream].
   void parse(List<int> data) {
     var update = UTF8.decode(data);
     update = update.split(out_separator);
@@ -118,17 +135,17 @@ class Properties {
     }
     for (var prop in outputs.values) {
       var foo = update.removeAt(0);
-      if (prop.type == 'int') {
+      if (prop.type == PropertyType.int) {
         foo = int.parse(foo, onError: (s) {
           print('error parsing update($s) for ${prop.node}');
           return 0;
         });
-      } else if (prop.type == 'float') {
+      } else if (prop.type == PropertyType.float) {
         foo = num.parse(foo, (s) {
           print('error parsing update($s) for ${prop.node}');
           return 0.0;
         });
-      } else if (prop.type == 'bool') {
+      } else if (prop.type == PropertyType.bool) {
         foo = foo == 'true' || foo == '1';
       }
 
@@ -140,31 +157,48 @@ class Properties {
     }
   }
 
-  operator [](key) => properties[key];
+  /// Looks up any [Property] by its [Property.node].
+  operator [](String node) => properties[node];
 }
 
-class Property {
-  final String node;
-  final String name;
-  final String type;
+/// Data type representation of a given property in the protocol.
+enum PropertyType { bool, int, float }
 
+/// Reprsents on node in the [FlightGear property tree](http://wiki.flightgear.org/Property_tree).
+class Property {
+  /// The path in the tree to a given property.
+  final String node;
+
+  /// A string only meant for human edification,
+  final String name;
+
+  /// The variable type for value in transmission.
+  final PropertyType type;
+
+  /// Value of this property, either written to by ArdKnob clients or received
+  /// by FlightGear transmission.
   dynamic get value => _value;
   void set value(dynamic value) {
     if (!writeable) throw new StateError('$node is not marked as writeable');
-    if (type == 'int' && value is! int)
+    if (type == PropertyType.int && value is! int)
       throw new StateError('$node is integer');
-    if (type == 'float' && value is! num) throw new StateError('$node is num');
-    if (type == 'bool' && value is! bool) throw new StateError('$node is bool');
+    if (type == PropertyType.float && value is! num)
+      throw new StateError('$node is num');
+    if (type == PropertyType.bool && value is! bool)
+      throw new StateError('$node is bool');
     _value = value;
   }
 
   dynamic _value;
 
-  /// Can this property be written to.
+  /// Is this property writeable?
   bool get writeable => _writeable;
   bool _writeable = false;
 
   final _streamctl;
+
+  /// A stream of update events only when [value] changes due to transmission
+  /// from FlightGear.
   Stream<Property> get stream => _streamctl.stream;
 
   Property(this.name, this.node, this.type)
