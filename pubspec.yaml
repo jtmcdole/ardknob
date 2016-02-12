@@ -1,11 +1,11 @@
 name: ardknob
-version: 0.9.0
+version: 0.9.1
 description: Arduino Knob and 128x64 OLED display application 
 author: John McDole <john@mcdole.org>
 homepage: https://github.com/jtmcdole/ardknob
 dependencies:
   serial_port: ">=0.3.1 < 0.4.0"
-  xml: "^2.4.1"
+  xml: ">=2.4.1 < 3.0.0"
 dev_dependencies:
   ansicolor: "^0.0.9"
   ccompile: "^0.2.10"
