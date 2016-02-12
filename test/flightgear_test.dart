@@ -64,6 +64,52 @@ main() {
         <node>bar</node>
         <type>string</type>
       </chunk>
+    </output>
+    <input>
+      <line_separator>newline</line_separator>
+      <var_separator>/</var_separator>
+      <chunk>
+        <name>Zoo</name>
+        <node>zoo</node>
+      </chunk>
+      <chunk>
+        <name>Foo</name>
+        <node>foo</node>
+        <type>bool</type>
+      </chunk>
+    </input>
+  </generic>
+</PropertyList>''');
+        expect(prop, isNotNull);
+        expect(prop.properties.length, 3);
+        expect(prop.outputs.length, 2);
+        expect(prop.inputs.length, 2);
+
+        expect(prop.outputs.keys, ['foo', 'bar']);
+        expect(prop.inputs.keys, ['zoo', 'foo']);
+        expect(prop.properties.keys, ['foo', 'bar', 'zoo']);
+        expect(prop.inputs['foo'], same(prop.outputs['foo']));
+        expect(prop['foo'].writeable, isTrue);
+        expect(prop['bar'].writeable, isFalse);
+      });
+    });
+    test('parse()', () async {
+      var prop = new Properties('''
+<PropertyList>
+  <generic>
+    <output>
+      <line_separator>newline</line_separator>
+      <var_separator>;</var_separator>
+      <chunk>
+        <name>Foo</name>
+        <node>foo</node>
+        <type>bool</type>
+      </chunk>
+      <chunk>
+        <name>Bar</name>
+        <node>bar</node>
+        <type>string</type>
+      </chunk>
       <chunk>
         <name>Baz</name>
         <node>baz</node>
@@ -90,46 +136,108 @@ main() {
     </input>
   </generic>
 </PropertyList>''');
-        expect(prop, isNotNull);
-        expect(prop.properties.length, 5);
-        expect(prop.outputs.length, 4);
-        expect(prop.inputs.length, 2);
-
-        expect(prop.outputs.keys, ['foo', 'bar', 'baz', 'qux']);
-        expect(prop.inputs.keys, ['foo', 'zoo']);
-        expect(prop.inputs['foo'], same(prop.outputs['foo']));
-        expect(prop.inputs['foo'].writeable, isTrue);
-        expect(prop.outputs['bar'].writeable, isFalse);
-
-        int count = 0;
-        prop.outputs['foo'].stream.listen((val) {
-          expect(val, same(prop.outputs['foo']));
-          count++;
-        });
-        prop.parse(UTF8.encode('1;testing;1234;123.1234'));
-        expect(prop.outputs['foo'].value, isTrue);
-        expect(prop.outputs['bar'].value, 'testing');
-        expect(prop.outputs['baz'].value, 1234);
-        expect(prop.outputs['qux'].value, 123.1234);
-
-        await new Future.value();
-        expect(count, 1, reason: 'async stream update for foo');
-
-        prop.parse(UTF8.encode('1;testing;1234;123.1234'));
-        await new Future.value();
-        expect(count, 1, reason: 'async stream update only on change');
-
-        prop.parse(UTF8.encode('t;codefu;asdf;asdf'));
-        expect(prop.outputs['foo'].value, isFalse);
-        expect(prop.outputs['bar'].value, 'codefu');
-        expect(prop.outputs['baz'].value, 0);
-        expect(prop.outputs['qux'].value, 0.0);
-
-        await new Future.value();
-        expect(count, 2, reason: 'async stream update even with error');
-
-        // todo: write testing
+      int count = 0;
+      prop.outputs['foo'].stream.listen((val) {
+        expect(val, same(prop.outputs['foo']));
+        count++;
       });
+      prop.parse(UTF8.encode('1;testing;1234;123.1234'));
+      expect(prop['foo'].value, isTrue);
+      expect(prop['bar'].value, 'testing');
+      expect(prop['baz'].value, 1234);
+      expect(prop['qux'].value, 123.1234);
+
+      await new Future.value();
+      expect(count, 1, reason: 'async stream update for foo');
+
+      prop.parse(UTF8.encode('1;testing;1234;123.1234'));
+      await new Future.value();
+      expect(count, 1, reason: 'async stream update only on change');
+
+      prop.parse(UTF8.encode('t;codefu;asdf;asdf'));
+      expect(prop['foo'].value, isFalse);
+      expect(prop['bar'].value, 'codefu');
+      expect(prop['baz'].value, 0);
+      expect(prop['qux'].value, 0.0);
+
+      await new Future.value();
+      expect(count, 2, reason: 'async stream update even with error');
+
+      // Nothing changes if we get bad data
+      prop.parse(UTF8.encode(';;'));
+      await new Future.value();
+
+      expect(count, 2, reason: 'async stream update even with error');
+      expect(prop['foo'].value, isFalse);
+      expect(prop['bar'].value, 'codefu');
+      expect(prop['baz'].value, 0);
+      expect(prop['qux'].value, 0.0);
+    });
+  });
+  group('Property', () {
+    test('throws when non-writable', () async {
+      var prop = new Properties('''
+<PropertyList>
+  <generic>
+    <output>
+      <var_separator>;</var_separator>
+      <chunk>
+        <name>Foo</name>
+        <node>foo</node>
+        <type>bool</type>
+      </chunk>
+    </output>
+  </generic>
+</PropertyList>''');
+
+      try {
+        prop['foo'].value = 'blah';
+        fail('read only values throw on write');
+      } on StateError catch (e) {}
+    });
+    test('accepts only proper values', () async {
+      var prop = new Properties('''
+<PropertyList>
+  <generic>
+    <input>
+      <var_separator>;</var_separator>
+      <chunk>
+        <name>Foo</name>
+        <node>foo</node>
+        <type>bool</type>
+      </chunk>
+      <chunk>
+        <name>Bar</name>
+        <node>bar</node>
+      </chunk>
+      <chunk>
+        <name>Baz</name>
+        <node>baz</node>
+        <type>float</type>
+      </chunk>
+    </input>
+  </generic>
+</PropertyList>''');
+
+      try {
+        prop['foo'].value = true;
+        expect(prop['foo'].value, isTrue);
+        prop['foo'].value = 'blah';
+        fail('bool expects a boolean');
+      } on StateError catch (e) {}
+      try {
+        prop['bar'].value = 42;
+        expect(prop['bar'].value, 42);
+        prop['bar'].value = 1.1;
+        fail('int expects an integer');
+      } on StateError catch (e) {}
+      try {
+        prop['baz'].value = 32.0;
+        expect(prop['baz'].value, 32.0);
+        prop['baz'].value = true;
+        fail('float expects a num');
+      } on StateError catch (e) {}
+      print(prop['baz']);
     });
   });
 }

@@ -139,6 +139,8 @@ class Properties {
       }
     }
   }
+
+  operator [](key) => properties[key];
 }
 
 class Property {
