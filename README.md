@@ -1,3 +1,11 @@
+# ArdKNob
+
+A collection of libraries for talking to arduinos and FlightGear to create
+physical devices that can interface with the simluation.
+
+[![Build Status](https://travis-ci.org/jtmcdole/ardknob.svg?branch=master)](https://travis-ci.org/jtmcdole/ardknob)
+[![Coverage Status](https://img.shields.io/coveralls/jtmcdole/ardknob.svg)](https://coveralls.io/r/jtmcdole/ardknob)
+
 ## Motivation
 
 I want to control my Flightgear, an open source flight sim, nav and radio stacks

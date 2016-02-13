@@ -124,6 +124,7 @@ main() {
       var page1 = new TestPage('page1');
       var page2 = new TestPage('page2');
       var proto = new ArdProtoMock();
+      new Book('turn', proto)..add(page1)..add(page2);
 
       var knob1r = new KnobAction(1, Direction.right);
       var knob0d = new KnobAction(0, Direction.down);
@@ -140,7 +141,9 @@ main() {
 
   group('Page', () {
     test('displayNone', () {
+      var page1 = new TestPage('page1');
       var page2 = new TestPage('page2');
+      new Book('turn', new ArdProtoMock())..add(page1)..add(page2);
 
       page2.display.display();
       page2.display.clear();
