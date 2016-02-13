@@ -72,9 +72,7 @@ main() {
       var page1 = new TestPage('page1');
       var page2 = new TestPage('page2');
       var proto = new ArdProtoMock();
-      var book = new Book('turn', proto, debug: true, pageKnobId: 2)
-        ..add(page1)
-        ..add(page2);
+      var book = new Book('turn', proto, pageKnobId: 2)..add(page1)..add(page2);
 
       expect(page1.display, isNot(page2.display),
           reason: 'active page has different display');
@@ -128,7 +126,7 @@ main() {
       var page1 = new TestPage('page1');
       var page2 = new TestPage('page2');
       var proto = new ArdProtoMock();
-      var book = new Book('turn', proto, debug: true)..add(page1)..add(page2);
+      var book = new Book('turn', proto)..add(page1)..add(page2);
 
       var knob1r = new KnobAction(1, Direction.right);
       var knob0d = new KnobAction(0, Direction.down);
@@ -148,7 +146,7 @@ main() {
       var page1 = new TestPage('page1');
       var page2 = new TestPage('page2');
       var proto = new ArdProtoMock();
-      var book = new Book('turn', proto, debug: true)..add(page1)..add(page2);
+      var book = new Book('turn', proto)..add(page1)..add(page2);
 
       page2.display.display();
       page2.display.clear();

@@ -103,7 +103,6 @@ class Display {
     var work = [];
     for (int i = 0; i < height; i += linesPer) {
       var h = (height - i).clamp(0, linesPer);
-      proto.log("scan: $i height: $h");
       var fut = proto.write(
           (background == null ? 15 : 16) + (xmb ? 2 : 0),
           _s2b(x)

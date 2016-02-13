@@ -17,6 +17,7 @@ import 'dart:mirrors';
 
 import 'package:ardknob/ardproto.dart';
 
+import 'package:logging/logging.dart';
 import 'package:quiver/testing/async.dart';
 import 'package:serial_port/serial_port.dart';
 import 'package:test/test.dart';
@@ -24,6 +25,11 @@ import 'package:mockito/mockito.dart';
 
 main() {
   var libMirror = currentMirrorSystem().findLibrary(#ardproto);
+
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((LogRecord rec) {
+    print('${rec.level.name}: ${rec.time}: ${rec.message}');
+  });
 
   group('ArdProto', () {
     var port;
@@ -43,7 +49,6 @@ main() {
     });
 
     test('appends valid fletcher16 checksum', () async {
-      proto.debug = true;
       proto.write(1, [1, 2, 3]);
       var cap = verify(port.write(captureAny)).captured;
       expect(cap.length, 1);
@@ -60,11 +65,6 @@ main() {
       } catch (e) {
         expect(e, isArgumentError);
       }
-    });
-
-    /// because I'm a sucker for higher coverage?
-    test('logs', () {
-      proto.log('');
     });
 
     test('sends knob action updates', () async {

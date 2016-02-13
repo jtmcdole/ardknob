@@ -20,6 +20,8 @@ import 'dart:async';
 import 'package:ardknob/ardproto.dart';
 import 'package:ardknob/display.dart';
 
+import 'package:logging/logging.dart';
+
 /// Events passed to [Page.onEvent] dealing with different page actions.
 enum PageEvent {
   /// This [Page] has been added to a new [Book] (passed as data).
@@ -81,32 +83,24 @@ class Book {
   /// Which knob flips pages on [Direction.left] and [Direction.right].
   final int pageKnobId;
 
-  /// Controls debug log messages.
-  final bool debug;
-
   /// Normal display through which the active page can render.
   final Display _display;
 
   /// No-op display through which non-active pages can flip off.
   final Display _displayNone;
 
+  final Logger log = new Logger('Book');
+
   /// All of the pages in this book.
   List<Page> get pages => new List.from(_pages);
   List<Page> _pages;
 
-  Book(this.name, ArdProto proto,
-      {bool debug: false, Display display, this.pageKnobId})
-      : this.debug = debug,
-        this.proto = proto,
+  Book(this.name, ArdProto proto, {Display display, this.pageKnobId})
+      : this.proto = proto,
         _pages = <Page>[],
         _display = display ?? new Display(proto),
-        _displayNone = new DisplayNone(proto, debug: debug) {
+        _displayNone = new DisplayNone(proto) {
     proto.onAction.listen(_onKnob);
-  }
-
-  /// Prints a debug message to the stdout if [debug] is true.
-  log(msg) {
-    if (debug) print('[book:$name] $msg');
   }
 
   /// Adds a page to the end of this book.
@@ -123,12 +117,12 @@ class Book {
     if (_active == null) _active = page;
     page._display = _active == page ? _display : _displayNone;
     page.onEvent(PageEvent.added, this);
-    log("added $page");
+    log.info("added $page");
   }
 
   /// Removes a page from this book, if it is inserted.
   bool remove(Page page) {
-    log("removing $page");
+    log.info("removing $page");
     int idx = _pages.indexOf(page);
     if (idx == -1) return false;
 
@@ -161,7 +155,7 @@ class Book {
 
   /// Handles all actions from the arduino and sends most to the current [Page].
   _onKnob(KnobAction knob) {
-    log('$knob');
+    log.info('$knob');
 
     if (_active == null) return;
 
@@ -169,11 +163,11 @@ class Book {
     if (knob.id == pageKnobId) {
       switch (knob.direction) {
         case Direction.left:
-          log('page turn left');
+          log.info('page turn left');
           turn(-1);
           return;
         case Direction.right:
-          log('page turn right');
+          log.info('page turn right');
           turn(1);
           return;
         default:
@@ -206,14 +200,12 @@ class DisplayNone implements Display {
   /// The arduino this non-operative display would talk to, if it cared.
   final ArdProto proto;
 
-  bool debug;
+  final Logger log = new Logger('DisplayNone');
 
-  DisplayNone(this.proto, {this.debug: false});
-
-  log(msg) => debug ? print('[dispnone] $msg') : '';
+  DisplayNone(this.proto);
 
   noSuchMethod(invoke) {
-    log('${invoke.memberName}(${invoke.positionalArguments}, '
+    log.finer('${invoke.memberName}(${invoke.positionalArguments}, '
         '${invoke.namedArguments}) called');
     if (invoke.isMethod) return new Future.value(false);
   }

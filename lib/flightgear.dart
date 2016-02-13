@@ -19,6 +19,7 @@ library flightgear;
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:logging/logging.dart';
 import 'package:xml/xml.dart' as xml;
 
 /// FlightGear properties tree, implemented as a map.
@@ -34,6 +35,8 @@ import 'package:xml/xml.dart' as xml;
 /// create the bidirectional nature and pass data in / send data out from this
 /// single property set.
 class Properties {
+  final Logger log = new Logger('Properties');
+
   /// String separator used between properties sent from FlightGear.
   String out_separator;
 
@@ -152,7 +155,7 @@ class Properties {
     var update = UTF8.decode(data);
     update = update.split(out_separator);
     if (update.length != outputs.values.length) {
-      print('err... update does not contain all properties ($update)');
+      log.warning('update does not contain all properties ($update)');
       return;
     }
     for (var prop in outputs.values) prop._update(update.removeAt(0));
@@ -183,6 +186,8 @@ class Property {
   /// The variable type for value in transmission.
   final PropertyType type;
 
+  final Logger log = new Logger('Property');
+
   /// Value of this property, either written to by ArdKnob clients or received
   /// by FlightGear transmission.
   dynamic get value => _value;
@@ -207,12 +212,12 @@ class Property {
   void _update(value) {
     if (type == PropertyType.int) {
       value = int.parse(value, onError: (s) {
-        print('error parsing update($s) for $node');
+        log.warning('$this: error parsing update($s)');
         return 0;
       });
     } else if (type == PropertyType.float) {
       value = num.parse(value, (s) {
-        print('error parsing update($s) for $node');
+        log.warning('$this: error parsing update($s)');
         return 0.0;
       });
     } else if (type == PropertyType.bool) {
@@ -221,7 +226,7 @@ class Property {
 
     if (value != _value) {
       _value = value;
-      print('$node updated: $value');
+      log.info('$this updated');
       _streamOutput.add(this);
     }
   }

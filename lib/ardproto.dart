@@ -42,6 +42,7 @@ library ardproto;
 
 import 'dart:async';
 
+import 'package:logging/logging.dart';
 import 'package:serial_port/serial_port.dart';
 
 /// Arduino serial protocol handler.
@@ -58,8 +59,7 @@ class ArdProto {
   /// Communications port with the arduino.
   final SerialPort port;
 
-  /// Enables debug logging.
-  bool debug;
+  final Logger log = new Logger('ArdProto');
 
   /// Monotonically increasing counter of which the lower 8 bits is sent
   /// to the arduino to handle ACK'ing.
@@ -90,15 +90,8 @@ class ArdProto {
 
   Future _errorHoldoff;
 
-  ArdProto(this.port, {this.debug: false}) : _watch = new Stopwatch()..start() {
+  ArdProto(this.port) : _watch = new Stopwatch()..start() {
     _startReading();
-  }
-
-  /// Prints a debug message to the stdout.
-  log(msg) {
-    if (debug) {
-      print('[ardproto] $msg');
-    }
   }
 
   /// Writes a command and optional data to the [port].
@@ -134,19 +127,19 @@ class ArdProto {
   ///
   /// Returns a future which completes when all work is done.
   Future close() async {
-    log('closing');
+    log.info('closing');
     for (var work in _ackQueue..addAll(_waitQueue)) {
-      log('  outstanding work: $work');
+      log.info('  outstanding work: $work');
       work.completer.complete(false);
     }
-    log('clearing queues');
+    log.info('clearing queues');
     _ackQueue.clear();
     _waitQueue.clear();
     _bytesOut = 0;
     _errorHoldoff = null;
-    log('closing knob controller');
+    log.info('closing knob controller');
     _knobAction.close();
-    log('canceling serial');
+    log.info('canceling serial');
     await _sub.cancel();
   }
 
@@ -154,11 +147,11 @@ class ArdProto {
   _sendWork(_Work work) {
     _bytesOut += work.size;
     _ackQueue.add(work);
-    if (debug) {
+    log.finest(() {
       var dump =
           work.bytes.map((e) => '${e < 0x10 ? 0 : ''}${e.toRadixString(16)}');
-      log('data: ${dump.join(' ')}');
-    }
+      return 'data: ${dump.join(' ')}';
+    });
     port.write(work.bytes);
   }
 
@@ -187,22 +180,22 @@ class ArdProto {
 
         // Error Handling. TODO: report error cases.
         if (cmd == 0xFF) {
-          log('Error received: ${cmd.toRadixString(16)} '
+          log.warning('Error received: ${cmd.toRadixString(16)} '
               '${ack.toRadixString(16)}');
           var fut;
           fut = new Future.delayed(const Duration(milliseconds: 100), () {
-            log('error handler fired');
+            log.warning('error handler fired');
             // There was a later error message that pushed us back.
             if (fut != _errorHoldoff) return;
             _errorHoldoff = null;
-            log('holdoff done');
+            log.warning('holdoff done');
             _sendQueuedWork();
           });
           _errorHoldoff = fut;
 
           // kill outstanding acks.
           for (var work in _ackQueue) {
-            log('dead command: $work'
+            log.warning('dead command: $work'
                 'duration: ${now - work.sent}');
             work.completer.complete(false);
             _bytesOut -= work.size;
@@ -224,7 +217,7 @@ class ArdProto {
             ((_ackQueue.first.ack & 0xFF) != ack ||
                 _ackQueue.first.command != cmd)) {
           var work = _ackQueue.removeAt(0);
-          log('un-acked command: $work '
+          log.warning('un-acked command: $work '
               'duration: ${now - work.sent}');
           work.completer.complete(false);
           _bytesOut -= work.size;
@@ -232,14 +225,14 @@ class ArdProto {
 
         // Sanity check, we should be getting ack's that we sent!
         if (_ackQueue.isEmpty) {
-          log('unknown ack: $ack cmd: $cmd');
+          log.warning('unknown ack: $ack cmd: $cmd');
           continue;
         }
 
         // ipsofacto this is the work.
         var work = _ackQueue.removeAt(0);
         _bytesOut -= work.size;
-        log('completed command: $work '
+        log.info('completed command: $work '
             'duration: ${now - work.sent}');
         work.completer.complete(true);
 
