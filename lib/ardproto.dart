@@ -178,7 +178,6 @@ class ArdProto {
         int ack = input.removeAt(0);
         int cmd = input.removeAt(0);
 
-        // Error Handling. TODO: report error cases.
         if (cmd == 0xFF) {
           log.warning('Error received: ${cmd.toRadixString(16)} '
               '${ack.toRadixString(16)}');

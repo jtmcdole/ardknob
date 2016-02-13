@@ -23,7 +23,7 @@ import 'package:path/path.dart' as p;
 Directory current = Directory.current;
 
 main(List<String> args) async {
-  var path = p.join('test', 'all_test.dart');
+  var path = p.join('test', 'all_tests.dart');
   var hits = await runAndCollect(path, timeout: const Duration(seconds: 10));
   var hitMap = createHitmap(hits['coverage']);
 

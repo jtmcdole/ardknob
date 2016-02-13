@@ -242,7 +242,7 @@ main() {
       try {
         prop['foo'].value = 'blah';
         fail('read only values throw on write');
-      } on StateError catch (e) {}
+      } on StateError catch (_) {}
     });
     test('accepts only proper values', () async {
       var prop = new Properties('''
@@ -273,19 +273,19 @@ main() {
         expect(prop['foo'].value, isTrue);
         prop['foo'].value = 'blah';
         fail('bool expects a boolean');
-      } on StateError catch (e) {}
+      } on StateError catch (_) {}
       try {
         prop['bar'].value = 42;
         expect(prop['bar'].value, 42);
         prop['bar'].value = 1.1;
         fail('int expects an integer');
-      } on StateError catch (e) {}
+      } on StateError catch (_) {}
       try {
         prop['baz'].value = 32.0;
         expect(prop['baz'].value, 32.0);
         prop['baz'].value = true;
         fail('float expects a num');
-      } on StateError catch (e) {}
+      } on StateError catch (_) {}
       print(prop['baz']);
     });
   });

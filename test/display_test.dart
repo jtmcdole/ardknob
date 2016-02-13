@@ -13,22 +13,15 @@
 // limitations under the License.
 
 import 'dart:async';
-import 'dart:mirrors';
 
 import 'package:ardknob/ardproto.dart';
 import 'package:ardknob/display.dart';
 
-import 'package:quiver/testing/async.dart';
-import 'package:serial_port/serial_port.dart';
 import 'package:test/test.dart';
 import 'package:mockito/mockito.dart';
 
 main() {
-  var libMirror = currentMirrorSystem().findLibrary(#display);
-
   group('Display', () {
-    getSym(String sym) => MirrorSystem.getSymbol(sym, libMirror);
-
     var disp;
     var proto;
 
@@ -159,6 +152,4 @@ main() {
   });
 }
 
-class ArdProtoMock extends Mock implements ArdProto {
-  noSuchMethod(i) => super.noSuchMethod(i);
-}
+class ArdProtoMock extends Mock implements ArdProto {}

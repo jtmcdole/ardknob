@@ -201,7 +201,5 @@ class MockSerialPort extends Mock implements SerialPort {
   StreamController _host = new StreamController();
   Stream<List<int>> get onRead => _host.stream;
 
-  noSuchMethod(i) => super.noSuchMethod(i);
-
   Future close() => new Future.value();
 }

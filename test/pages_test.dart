@@ -13,10 +13,8 @@
 // limitations under the License.
 
 import 'dart:async';
-import 'dart:mirrors';
 
 import 'package:ardknob/ardproto.dart';
-import 'package:ardknob/display.dart';
 import 'package:ardknob/pages.dart';
 
 import 'package:test/test.dart';
@@ -126,7 +124,6 @@ main() {
       var page1 = new TestPage('page1');
       var page2 = new TestPage('page2');
       var proto = new ArdProtoMock();
-      var book = new Book('turn', proto)..add(page1)..add(page2);
 
       var knob1r = new KnobAction(1, Direction.right);
       var knob0d = new KnobAction(0, Direction.down);
@@ -143,14 +140,11 @@ main() {
 
   group('Page', () {
     test('displayNone', () {
-      var page1 = new TestPage('page1');
       var page2 = new TestPage('page2');
-      var proto = new ArdProtoMock();
-      var book = new Book('turn', proto)..add(page1)..add(page2);
 
       page2.display.display();
       page2.display.clear();
-      page2.display.rectangle(10, 20, 30, 40);
+      page2.display.rectangle(10, 20, 30, 40, 50);
     });
   });
 }
@@ -174,6 +168,4 @@ class ArdProtoMock extends Mock implements ArdProto {
 
   /// Stream of actions reported by the arduino.
   Stream<KnobAction> get onAction => _knobAction.stream;
-
-  noSuchMethod(i) => super.noSuchMethod(i);
 }
