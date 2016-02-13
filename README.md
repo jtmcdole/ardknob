@@ -1,4 +1,4 @@
-# ArdKNob
+# ArdKnob
 
 A collection of libraries for talking to arduinos and [FlightGear](www.flightgear.org)
 to create physical devices that can interface with the simluation.
