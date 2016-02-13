@@ -49,9 +49,15 @@ class Properties {
   /// Properties sent from FlightGear.
   Map<String, Property> outputs;
 
+  /// A stream of updates to send back to FlightGear,
+  Stream<String> get updates => _updates.stream;
+
+  final StreamController<String> _updates;
+
   /// Parses the [FlightGear Generic Protocol](http://wiki.flightgear.org/Generic_protocol)
   /// passed in as an xml string.
-  Properties(String generic) {
+  Properties(String generic)
+      : _updates = new StreamController<String>.broadcast(sync: true) {
     var doc = xml.parse(generic);
     var gen =
         doc.findElements('PropertyList').first.findElements('generic').first;
@@ -116,10 +122,26 @@ class Properties {
     // re-use them and allow the user to read back their write.
     for (var chunk in input) {
       var out = outputs[chunk.node];
-      inputs[chunk.node] = (out ?? chunk).._writeable = true;
+      inputs[chunk.node] = (out ?? chunk)
+        .._writeable = true
+        .._onEdit = _onEdit;
     }
 
     properties = new Map<String, Property>.from(outputs)..addAll(inputs);
+  }
+
+  /// Guards multiple properties being edited by the same task.
+  Future _writeWhen;
+
+  /// Signals [updates] when properties have been modified by the user.
+  _onEdit(Property prop) {
+    _writeWhen = _writeWhen ??
+        new Future.microtask(() {
+          // note: set to null first in case stream listeners make more
+          // modifications - they need to be queued up.
+          _writeWhen = null;
+          _updates.add(inputMessage);
+        });
   }
 
   /// Parse a line of data sent from FlightGear and update the [outputs]
@@ -130,35 +152,21 @@ class Properties {
     var update = UTF8.decode(data);
     update = update.split(out_separator);
     if (update.length != outputs.values.length) {
-      print("err... update doesn't contain all properties ($update)");
+      print('err... update does not contain all properties ($update)');
       return;
     }
-    for (var prop in outputs.values) {
-      var foo = update.removeAt(0);
-      if (prop.type == PropertyType.int) {
-        foo = int.parse(foo, onError: (s) {
-          print('error parsing update($s) for ${prop.node}');
-          return 0;
-        });
-      } else if (prop.type == PropertyType.float) {
-        foo = num.parse(foo, (s) {
-          print('error parsing update($s) for ${prop.node}');
-          return 0.0;
-        });
-      } else if (prop.type == PropertyType.bool) {
-        foo = foo == 'true' || foo == '1';
-      }
-
-      if (foo != prop.value) {
-        prop._value = foo;
-        print("${prop.node} updated: $foo");
-        prop._streamctl.add(prop);
-      }
-    }
+    for (var prop in outputs.values) prop._update(update.removeAt(0));
   }
+
+  /// Generate an update message to send to FlightGear.
+  String get inputMessage =>
+      inputs.values.map((e) => e.value).join(in_separator);
 
   /// Looks up any [Property] by its [Property.node].
   operator [](String node) => properties[node];
+
+  /// Looks up any [Property] by its [Property.node].
+  operator []=(String node, value) => properties[node].value = value;
 }
 
 /// Data type representation of a given property in the protocol.
@@ -187,6 +195,35 @@ class Property {
     if (type == PropertyType.bool && value is! bool)
       throw new StateError('$node is bool');
     _value = value;
+    assert(_onEdit != null);
+    _onEdit(this);
+  }
+
+  /// When the user edits this value, this callback can be made.i
+  /// Cheaper than a stream...
+  Function _onEdit;
+
+  /// Internal update driven by FlightGear.
+  void _update(value) {
+    if (type == PropertyType.int) {
+      value = int.parse(value, onError: (s) {
+        print('error parsing update($s) for $node');
+        return 0;
+      });
+    } else if (type == PropertyType.float) {
+      value = num.parse(value, (s) {
+        print('error parsing update($s) for $node');
+        return 0.0;
+      });
+    } else if (type == PropertyType.bool) {
+      value = value == 'true' || value == '1';
+    }
+
+    if (value != _value) {
+      _value = value;
+      print('$node updated: $value');
+      _streamOutput.add(this);
+    }
   }
 
   dynamic _value;
@@ -195,14 +232,14 @@ class Property {
   bool get writeable => _writeable;
   bool _writeable = false;
 
-  final _streamctl;
+  final StreamController<Property> _streamOutput;
 
   /// A stream of update events only when [value] changes due to transmission
   /// from FlightGear.
-  Stream<Property> get stream => _streamctl.stream;
+  Stream<Property> get stream => _streamOutput.stream;
 
   Property(this.name, this.node, this.type)
-      : _streamctl = new StreamController<Property>.broadcast();
+      : _streamOutput = new StreamController<Property>.broadcast();
 
-  String toString() => "Prop($name, $node, $type)";
+  String toString() => 'Prop($name, $node, $type)';
 }

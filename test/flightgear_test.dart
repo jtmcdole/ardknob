@@ -182,6 +182,46 @@ main() {
       expect(prop['baz'].value, 0);
       expect(prop['qux'].value, 0.0);
     });
+    test('inputMessage', () async {
+      var prop = new Properties('''
+<PropertyList>
+  <generic>
+    <input>
+      <var_separator>;</var_separator>
+      <chunk>
+        <name>Foo</name>
+        <node>foo</node>
+        <type>bool</type>
+      </chunk>
+      <chunk>
+        <name>Bar</name>
+        <node>bar</node>
+      </chunk>
+      <chunk>
+        <name>Baz</name>
+        <node>baz</node>
+        <type>float</type>
+      </chunk>
+    </input>
+  </generic>
+</PropertyList>''');
+      int updates = 0;
+      prop.updates.listen((String update) {
+        updates++;
+        // Don't do this, even though it is programatically safe. There is no
+        // guard to flooding FlightGear... yet
+        if (updates == 1) prop['bar'] = 12345;
+        expect(prop.inputMessage, 'true;12345;1.123455');
+      });
+      prop['foo'] = true;
+      prop['baz'] = 1.123455;
+      prop['bar'] = 12345;
+      expect(prop.inputMessage, 'true;12345;1.123455');
+
+      await new Future.value();
+      expect(updates, 1,
+          reason: 'stacked property writes only signal one update');
+    });
   });
   group('Property', () {
     test('throws when non-writable', () async {
