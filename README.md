@@ -1,10 +1,10 @@
 # ArdKNob
 
-A collection of libraries for talking to arduinos and FlightGear to create
-physical devices that can interface with the simluation.
+A collection of libraries for talking to arduinos and [FlightGear](www.flightgear.org)
+to create physical devices that can interface with the simluation.
 
 [![Build Status](https://travis-ci.org/jtmcdole/ardknob.svg?branch=master)](https://travis-ci.org/jtmcdole/ardknob)
-[![Coverage Status](https://img.shields.io/coveralls/jtmcdole/ardknob.svg)](https://coveralls.io/r/jtmcdole/ardknob)
+[![Coverage Status](https://coveralls.io/repos/github/jtmcdole/ardknob/badge.svg?branch=master)](https://coveralls.io/github/jtmcdole/ardknob?branch=master)
 
 ## Motivation
 
