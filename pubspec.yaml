@@ -1,6 +1,6 @@
 name: ardknob
-version: 0.9.1
-description: Arduino Knob and 128x64 OLED display application 
+version: 1.0.0
+description: Libraries for hardware radio stacks with Arduino, Dart, and FlighGear flight simulator.
 author: John McDole <john@mcdole.org>
 homepage: https://github.com/jtmcdole/ardknob
 dependencies:
