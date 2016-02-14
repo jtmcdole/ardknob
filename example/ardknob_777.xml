@@ -9,7 +9,6 @@
         <node>instrumentation/afds/inputs/AP</node>
         <type>bool</type>
       </chunk>
-
       <chunk>
         <name>auto-throttle-left</name>
         <node>instrumentation/afds/inputs/at-armed</node>
@@ -41,5 +40,44 @@
         <format>%03.3f</format>
       </chunk>
     </output>
+    <input>
+      <line_separator>newline</line_separator>
+      <var_separator>;</var_separator>
+      <chunk>
+        <name>auto-pilot</name>
+        <node>instrumentation/afds/inputs/AP</node>
+        <type>bool</type>
+      </chunk>
+      <chunk>
+        <name>auto-throttle-left</name>
+        <node>instrumentation/afds/inputs/at-armed</node>
+      </chunk>
+      <chunk>
+        <name>auto-throttle-right</name>
+        <node>instrumentation/afds/inputs/at-armed[1]</node>
+      </chunk>
+      <chunk>
+        <name>auto-throttle-speed</name>
+        <node>autopilot/settings/target-speed-kt</node>
+        <type>int</type>
+      </chunk>
+      <chunk>
+        <name>bank-limit</name>
+        <node>instrumentation/afds/inputs/bank-limit-switch</node>
+        <type>int</type>
+      </chunk>
+      <chunk>
+        <name>nav1-actual</name>
+        <node>instrumentation/nav/frequencies/selected-mhz</node>
+        <type>float</type>
+        <format>%03.3f</format>
+      </chunk>
+      <chunk>
+        <name>nav1-standby</name>
+        <node>instrumentation/nav/frequencies/standby-mhz</node>
+        <type>float</type>
+        <format>%03.3f</format>
+      </chunk>
+    </input>
   </generic>
 </PropertyList>

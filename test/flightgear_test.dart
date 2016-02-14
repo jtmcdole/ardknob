@@ -206,7 +206,7 @@ main() {
   </generic>
 </PropertyList>''');
       int updates = 0;
-      prop.updates.listen((String update) {
+      prop.onUpdate.listen((String update) {
         updates++;
         // Don't do this, even though it is programatically safe. There is no
         // guard to flooding FlightGear... yet

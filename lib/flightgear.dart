@@ -43,6 +43,9 @@ class Properties {
   /// String separator used between properties sent from ArdKnob.
   String in_separator;
 
+  /// String separator between lines...
+  String in_line;
+
   /// All properties parsed from the generic protocol.
   Map<String, Property> properties;
 
@@ -53,7 +56,7 @@ class Properties {
   Map<String, Property> outputs;
 
   /// A stream of updates to send back to FlightGear,
-  Stream<String> get updates => _updates.stream;
+  Stream<String> get onUpdate => _updates.stream;
 
   final StreamController<String> _updates;
 
@@ -117,6 +120,12 @@ class Properties {
     if (!input.isEmpty) {
       var sep = input.first.findElements('var_separator');
       in_separator = sep.isEmpty ? '' : sep.first.text;
+      sep = input.first.findElements('line_separator');
+      if (sep.isNotEmpty && sep.first.text == 'newline') {
+        in_line = '\n';
+      } else {
+        in_line = '';
+      }
     }
     input = input.isEmpty ? [] : input.first.children;
     input = parseChunks(input);
@@ -136,7 +145,7 @@ class Properties {
   /// Guards multiple properties being edited by the same task.
   Future _writeWhen;
 
-  /// Signals [updates] when properties have been modified by the user.
+  /// Signals [onUpdates] when properties have been modified by the user.
   _onEdit(Property prop) {
     _writeWhen = _writeWhen ??
         new Future.microtask(() {
@@ -162,8 +171,10 @@ class Properties {
   }
 
   /// Generate an update message to send to FlightGear.
-  String get inputMessage =>
-      inputs.values.map((e) => e.value).join(in_separator);
+  String get inputMessage {
+    var msg = inputs.values.map((e) => e.value).join(in_separator);
+    return '$msg$in_line';
+  }
 
   /// Looks up any [Property] by its [Property.node].
   operator [](String node) => properties[node];
@@ -246,5 +257,5 @@ class Property {
   Property(this.name, this.node, this.type)
       : _streamOutput = new StreamController<Property>.broadcast();
 
-  String toString() => 'Prop($name, $node, $type)';
+  String toString() => 'Prop($name, $node, $type, $value)';
 }
