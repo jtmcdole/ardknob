@@ -20,7 +20,7 @@ import 'package:ardknob/flightgear.dart';
 import 'package:test/test.dart';
 
 main() {
-  group('Properties', () {
+  group('PropertyTree', () {
     group('constructor', () {
       test('throws on invalid data', () {
         expectBoom(meth, reason) {
@@ -29,15 +29,15 @@ main() {
             fail(reason);
           } catch (e) {}
         }
-        expectBoom(() => new Properties(null), 'null xml should blow up');
-        expectBoom(() => new Properties(''), 'empty string should blow up');
-        expectBoom(() => new Properties('this is junk'),
+        expectBoom(() => new PropertyTree(null), 'null xml should blow up');
+        expectBoom(() => new PropertyTree(''), 'empty string should blow up');
+        expectBoom(() => new PropertyTree('this is junk'),
             'empty string should blow up');
-        expectBoom(() => new Properties('''
+        expectBoom(() => new PropertyTree('''
               <foo>
                 <bar>baz</bar>
               </foo>'''), 'missing elements');
-        expectBoom(() => new Properties('''
+        expectBoom(() => new PropertyTree('''
               <PropertyList>
                 <generic>
                   <output>
@@ -49,7 +49,7 @@ main() {
               </PropertyList>'''), 'invalid type');
       });
       test('works with empty properties', () {
-        var prop = new Properties('''
+        var prop = new PropertyTree('''
             <PropertyList>
               <generic>
               </generic>
@@ -58,7 +58,7 @@ main() {
         expect(prop.properties, isEmpty);
       });
       test('works with output / input properties', () async {
-        var prop = new Properties('''
+        var prop = new PropertyTree('''
 <PropertyList>
   <generic>
     <output>
@@ -104,7 +104,7 @@ main() {
       });
     });
     test('parse()', () async {
-      var prop = new Properties('''
+      var prop = new PropertyTree('''
 <PropertyList>
   <generic>
     <output>
@@ -183,7 +183,7 @@ main() {
       expect(prop['qux'].value, 0.0);
     });
     test('inputMessage', () async {
-      var prop = new Properties('''
+      var prop = new PropertyTree('''
 <PropertyList>
   <generic>
     <input>
@@ -225,7 +225,7 @@ main() {
   });
   group('Property', () {
     test('throws when non-writable', () async {
-      var prop = new Properties('''
+      var prop = new PropertyTree('''
 <PropertyList>
   <generic>
     <output>
@@ -245,7 +245,7 @@ main() {
       } on StateError catch (_) {}
     });
     test('accepts only proper values', () async {
-      var prop = new Properties('''
+      var prop = new PropertyTree('''
 <PropertyList>
   <generic>
     <input>

@@ -34,8 +34,8 @@ import 'package:xml/xml.dart' as xml;
 /// To get around this, we don't care about sockets here - callers need to
 /// create the bidirectional nature and pass data in / send data out from this
 /// single property set.
-class Properties {
-  final Logger log = new Logger('Properties');
+class PropertyTree {
+  final Logger log = new Logger('PropertyTree');
 
   /// String separator used between properties sent from FlightGear.
   String out_separator;
@@ -62,7 +62,7 @@ class Properties {
 
   /// Parses the [FlightGear Generic Protocol](http://wiki.flightgear.org/Generic_protocol)
   /// passed in as an xml string.
-  Properties(String generic)
+  PropertyTree(String generic)
       : _updates = new StreamController<String>.broadcast(sync: true) {
     var doc = xml.parse(generic);
     var gen =

@@ -48,7 +48,7 @@ main(List<String> args) async {
   log.info("$proto");
 
   var xml = await new File('example/ardknob_777.xml').readAsString();
-  var props = new Properties(xml);
+  var props = new PropertyTree(xml);
   var bank = props['instrumentation/afds/inputs/bank-limit-switch'];
   var atl = props['instrumentation/afds/inputs/at-armed'];
   var atr = props['instrumentation/afds/inputs/at-armed[1]'];
