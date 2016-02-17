@@ -5,6 +5,63 @@
       <line_separator>newline</line_separator>
       <var_separator>;</var_separator>
       <chunk>
+        <name>speed</name>
+        <node>autopilot/settings/target-speed-kt</node>
+      </chunk>
+      <chunk>
+        <name>speed-mach</name>
+        <node>autopilot/settings/target-speed-mach</node>
+        <type>float</type>
+        <format>%03.3f</format>
+      </chunk>
+      <chunk>
+        <name>heading-bug</name>
+        <node>autopilot/settings/heading-bug-deg</node>
+      </chunk>
+      <chunk>
+        <name>bank-limit</name>
+        <node>instrumentation/afds/inputs/bank-limit-switch</node>
+        <type>int</type>
+      </chunk>
+      <chunk>
+        <name>altitude-ft</name>
+        <node>autopilot/settings/counter-set-altitude-ft</node>
+      </chunk>
+      <chunk>
+        <name>lateral navigation</name>
+        <node>instrumentation/afds/inputs/lnav-armed</node>
+        <type>bool</type>
+      </chunk>
+      <chunk>
+        <name>vertical navigation</name>
+        <node>instrumentation/afds/inputs/vnav-armed</node>
+        <type>bool</type>
+      </chunk>
+      <chunk>
+        <name>localizer armed</name>
+        <node>instrumentation/afds/inputs/loc-armed</node>
+        <type>bool</type>
+      </chunk>
+      <chunk>
+        <name>glide-scope armed</name>
+        <node>instrumentation/afds/inputs/gs-armed</node>
+        <type>bool</type>
+      </chunk>
+      <chunk>
+        <name>flight-director</name>
+        <node>instrumentation/afds/inputs/FD</node>
+        <type>bool</type>
+      </chunk>
+      <chunk>
+        <name>auto-break-knob</name>
+        <node>autopilot/autobreak/step</node>
+      </chunk>
+      <chunk>
+        <name>auto-pilot-disengage</name>
+        <node>instrumentation/afds/inputs/AP-disengage</node>
+        <type>bool</type>
+      </chunk>
+      <chunk>
         <name>auto-pilot</name>
         <node>instrumentation/afds/inputs/AP</node>
         <type>bool</type>
@@ -18,16 +75,6 @@
         <node>instrumentation/afds/inputs/at-armed[1]</node>
       </chunk>
       <chunk>
-        <name>auto-throttle-speed</name>
-        <node>autopilot/settings/target-speed-kt</node>
-        <type>int</type>
-      </chunk>
-      <chunk>
-        <name>bank-limit</name>
-        <node>instrumentation/afds/inputs/bank-limit-switch</node>
-        <type>int</type>
-      </chunk>
-      <chunk>
         <name>nav1-actual</name>
         <node>instrumentation/nav/frequencies/selected-mhz</node>
         <type>float</type>
@@ -36,6 +83,18 @@
       <chunk>
         <name>nav1-standby</name>
         <node>instrumentation/nav/frequencies/standby-mhz</node>
+        <type>float</type>
+        <format>%03.3f</format>
+      </chunk>
+      <chunk>
+        <name>nav2-actual</name>
+        <node>instrumentation/nav[1]/frequencies/selected-mhz</node>
+        <type>float</type>
+        <format>%03.3f</format>
+      </chunk>
+      <chunk>
+        <name>nav2-standby</name>
+        <node>instrumentation/nav[1]/frequencies/standby-mhz</node>
         <type>float</type>
         <format>%03.3f</format>
       </chunk>
@@ -44,6 +103,63 @@
       <line_separator>newline</line_separator>
       <var_separator>;</var_separator>
       <chunk>
+        <name>speed</name>
+        <node>autopilot/settings/target-speed-kt</node>
+      </chunk>
+      <chunk>
+        <name>speed-mach</name>
+        <node>autopilot/settings/target-speed-mach</node>
+        <type>float</type>
+        <format>%03.3f</format>
+      </chunk>
+      <chunk>
+        <name>heading-bug</name>
+        <node>autopilot/settings/heading-bug-deg</node>
+      </chunk>
+      <chunk>
+        <name>bank-limit</name>
+        <node>instrumentation/afds/inputs/bank-limit-switch</node>
+        <type>int</type>
+      </chunk>
+      <chunk>
+        <name>altitude-ft</name>
+        <node>autopilot/settings/counter-set-altitude-ft</node>
+      </chunk>
+      <chunk>
+        <name>lateral navigation</name>
+        <node>instrumentation/afds/inputs/lnav-armed</node>
+        <type>bool</type>
+      </chunk>
+      <chunk>
+        <name>vertical navigation</name>
+        <node>instrumentation/afds/inputs/vnav-armed</node>
+        <type>bool</type>
+      </chunk>
+      <chunk>
+        <name>localizer armed</name>
+        <node>instrumentation/afds/inputs/loc-armed</node>
+        <type>bool</type>
+      </chunk>
+      <chunk>
+        <name>glide-scope armed</name>
+        <node>instrumentation/afds/inputs/gs-armed</node>
+        <type>bool</type>
+      </chunk>
+      <chunk>
+        <name>flight-director</name>
+        <node>instrumentation/afds/inputs/FD</node>
+        <type>bool</type>
+      </chunk>
+      <chunk>
+        <name>auto-break-knob</name>
+        <node>autopilot/autobreak/step</node>
+      </chunk>
+      <chunk>
+        <name>auto-pilot-disengage</name>
+        <node>instrumentation/afds/inputs/AP-disengage</node>
+        <type>bool</type>
+      </chunk>
+      <chunk>
         <name>auto-pilot</name>
         <node>instrumentation/afds/inputs/AP</node>
         <type>bool</type>
@@ -57,16 +173,6 @@
         <node>instrumentation/afds/inputs/at-armed[1]</node>
       </chunk>
       <chunk>
-        <name>auto-throttle-speed</name>
-        <node>autopilot/settings/target-speed-kt</node>
-        <type>int</type>
-      </chunk>
-      <chunk>
-        <name>bank-limit</name>
-        <node>instrumentation/afds/inputs/bank-limit-switch</node>
-        <type>int</type>
-      </chunk>
-      <chunk>
         <name>nav1-actual</name>
         <node>instrumentation/nav/frequencies/selected-mhz</node>
         <type>float</type>
@@ -75,6 +181,18 @@
       <chunk>
         <name>nav1-standby</name>
         <node>instrumentation/nav/frequencies/standby-mhz</node>
+        <type>float</type>
+        <format>%03.3f</format>
+      </chunk>
+      <chunk>
+        <name>nav2-actual</name>
+        <node>instrumentation/nav[1]/frequencies/selected-mhz</node>
+        <type>float</type>
+        <format>%03.3f</format>
+      </chunk>
+      <chunk>
+        <name>nav2-standby</name>
+        <node>instrumentation/nav[1]/frequencies/standby-mhz</node>
         <type>float</type>
         <format>%03.3f</format>
       </chunk>
