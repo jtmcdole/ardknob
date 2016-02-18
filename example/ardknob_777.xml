@@ -20,6 +20,14 @@
       </chunk>
       <chunk>
         <name>bank-limit</name>
+        <!--
+          0: AUTO
+          1: 5
+          2: 10
+          3: 15
+          4: 20
+          5: 25
+        -->
         <node>instrumentation/afds/inputs/bank-limit-switch</node>
         <type>int</type>
       </chunk>
@@ -53,8 +61,15 @@
         <type>bool</type>
       </chunk>
       <chunk>
-        <name>auto-break-knob</name>
-        <node>autopilot/autobreak/step</node>
+        <name>auto-brake-knob</name>
+        <!--
+          -2: RTO
+          -1: OFF
+           0: DISARM
+         1-4: 1..4
+           5: MAX/AUTO
+        -->
+        <node>autopilot/autobrake/step</node>
       </chunk>
       <chunk>
         <name>auto-pilot-disengage</name>
