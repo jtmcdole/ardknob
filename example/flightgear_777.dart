@@ -35,6 +35,7 @@ main(List<String> args) async {
 
   log.info("start");
   sniff = args.contains('--no-ard');
+  var proto;
   if (!sniff) {
     var port = args.isEmpty ? "COM3" : args.first;
     port = new SerialPort(port, baudrate: 115200);
@@ -47,7 +48,7 @@ main(List<String> args) async {
     }
     log.info("$port");
 
-    var proto = new ArdProto(port);
+    proto = new ArdProto(port);
     log.info("$proto");
   }
 

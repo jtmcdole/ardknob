@@ -75,6 +75,10 @@
         <node>instrumentation/afds/inputs/at-armed[1]</node>
       </chunk>
       <chunk>
+        <name>auto-throttle index</name>
+        <node>instrumentation/afds/inputs/autothrottle-index</node>
+      </chunk>
+      <chunk>
         <name>nav1-actual</name>
         <node>instrumentation/nav/frequencies/selected-mhz</node>
         <type>float</type>
@@ -171,6 +175,10 @@
       <chunk>
         <name>auto-throttle-right</name>
         <node>instrumentation/afds/inputs/at-armed[1]</node>
+      </chunk>
+      <chunk>
+        <name>auto-throttle index</name>
+        <node>instrumentation/afds/inputs/autothrottle-index</node>
       </chunk>
       <chunk>
         <name>nav1-actual</name>
