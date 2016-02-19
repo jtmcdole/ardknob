@@ -81,6 +81,8 @@ class PropertyTree {
         if (chunk.name.local != 'chunk') continue;
 
         var node, name, type;
+        var attributes = new Map.fromIterable(chunk.attributes,
+            key: (a) => a.name.local, value: (a) => a.value);
         for (var child in chunk.children) {
           if (child is! xml.XmlElement) continue;
           var text = child.text;
@@ -108,7 +110,9 @@ class PropertyTree {
               break;
           }
         }
-        nodes.add(new Property(name, node, type ?? PropertyType.int));
+        var prop =
+            new Property(name, node, type ?? PropertyType.int, attributes);
+        nodes.add(prop);
       }
       return nodes;
     }
@@ -135,7 +139,7 @@ class PropertyTree {
     for (var chunk in input) {
       var out = outputs[chunk.node];
       inputs[chunk.node] = (out ?? chunk)
-        .._writeable = true
+        ..writeable = true
         .._onEdit = _onEdit;
     }
 
@@ -187,7 +191,7 @@ class PropertyTree {
 enum PropertyType { bool, int, float }
 
 /// Reprsents on node in the [FlightGear property tree](http://wiki.flightgear.org/Property_tree).
-class Property {
+abstract class Property {
   /// The path in the tree to a given property.
   final String node;
 
@@ -197,56 +201,29 @@ class Property {
   /// The variable type for value in transmission.
   final PropertyType type;
 
+  /// A map of attributes for this propery
+  final Map<String, String> attributes;
+
   final Logger log = new Logger('Property');
 
   /// Value of this property, either written to by ArdKnob clients or received
   /// by FlightGear transmission.
-  dynamic get value => _value;
+  get value => _value;
+
   void set value(dynamic value) {
     if (!writeable) throw new StateError('$node is not marked as writeable');
-    if (type == PropertyType.int && value is! int)
-      throw new StateError('$node is integer');
-    if (type == PropertyType.float && value is! num)
-      throw new StateError('$node is num');
-    if (type == PropertyType.bool && value is! bool)
-      throw new StateError('$node is bool');
     _value = value;
-    assert(_onEdit != null);
-    _onEdit(this);
+    if (_onEdit != null) _onEdit(this);
   }
 
   /// When the user edits this value, this callback can be made.i
   /// Cheaper than a stream...
   Function _onEdit;
 
-  /// Internal update driven by FlightGear.
-  void _update(value) {
-    if (type == PropertyType.int) {
-      value = int.parse(value, onError: (s) {
-        log.warning('$this: error parsing update($s)');
-        return 0;
-      });
-    } else if (type == PropertyType.float) {
-      value = num.parse(value, (s) {
-        log.warning('$this: error parsing update($s)');
-        return 0.0;
-      });
-    } else if (type == PropertyType.bool) {
-      value = value == 'true' || value == '1';
-    }
-
-    if (value != _value) {
-      _value = value;
-      log.info('$this updated');
-      _streamOutput.add(this);
-    }
-  }
-
   dynamic _value;
 
   /// Is this property writeable?
-  bool get writeable => _writeable;
-  bool _writeable = false;
+  bool writeable;
 
   final StreamController<Property> _streamOutput;
 
@@ -254,8 +231,97 @@ class Property {
   /// from FlightGear.
   Stream<Property> get stream => _streamOutput.stream;
 
-  Property(this.name, this.node, this.type)
-      : _streamOutput = new StreamController<Property>.broadcast();
+  factory Property(String name, String node, PropertyType type,
+      Map<String, String> attributes) {
+    if (type == PropertyType.int) {
+      return new IntProperty._(name, node, type, attributes);
+    } else if (type == PropertyType.float) {
+      return new NumProperty._(name, node, type, attributes);
+    } else if (type == PropertyType.bool) {
+      return new BoolProperty._(name, node, type, attributes);
+    }
+  }
 
-  String toString() => 'Prop($name, $node, $type, $value)';
+  Property._(this.name, this.node, this.type, this.attributes)
+      : _streamOutput = new StreamController<Property>.broadcast(),
+        writeable = false;
+
+  /// Internal update driven by FlightGear.
+  void _update(value) {
+    if (value != _value) {
+      _value = value;
+      log.info('$this updated');
+      _streamOutput.add(this);
+    }
+  }
+}
+
+class IntProperty extends Property {
+  /// An optional minimum value.
+  num min;
+
+  /// An optional maximum value.
+  num max;
+
+  IntProperty._(name, node, type, att) : super._(name, node, type, att) {
+    if (attributes.containsKey('min')) {
+      min = attributes['min'] = int.parse(attributes['min']);
+    }
+    min ??= double.NEGATIVE_INFINITY;
+
+    if (attributes.containsKey('max')) {
+      max = attributes['max'] = int.parse(attributes['max']);
+    }
+    max ??= double.INFINITY;
+  }
+
+  void set value(value) {
+    if (value is! int) throw new StateError('$node is! integer');
+    super.value = value.clamp(min, max);
+  }
+
+  void _update(value) {
+    value = int.parse(value, onError: (s) {
+      log.warning('$this: error parsing update($s)');
+      return 0;
+    });
+    super._update(value);
+  }
+
+  String toString() => 'IntProp($name, $node, $value, $attributes)';
+}
+
+class NumProperty extends Property {
+  NumProperty._(name, node, type, att) : super._(name, node, type, att);
+
+  void set value(value) {
+    if (value is! num) throw new StateError('$node is! num');
+    super.value = value;
+  }
+
+  void _update(value) {
+    value = num.parse(value, (s) {
+      log.warning('$this: error parsing update($s)');
+      return 0.0;
+    });
+    super._update(value);
+  }
+
+  String toString() => 'NumProp($name, $node, $value, $attributes)';
+}
+
+class BoolProperty extends Property {
+  BoolProperty._(name, node, type, att) : super._(name, node, type, att);
+
+  void set value(value) {
+    if (value is! bool) throw new StateError('$node is! bool');
+    super.value = value;
+  }
+
+  void _update(value) {
+    value = value == 'true' || value == '1';
+    super._update(value);
+  }
+
+  String toString() => 'BoolProp($name, $node, $value, $attributes)';
 }

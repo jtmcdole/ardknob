@@ -27,7 +27,9 @@ main() {
           try {
             meth();
             fail(reason);
-          } catch (e) {}
+          } catch (e) {
+            print("boom($reason): $e");
+          }
         }
         expectBoom(() => new PropertyTree(null), 'null xml should blow up');
         expectBoom(() => new PropertyTree(''), 'empty string should blow up');
@@ -42,6 +44,8 @@ main() {
                 <generic>
                   <output>
                     <chunk>
+                      <name>Foo</name>
+                      <node>foo</node>
                       <type>string</type>
                     </chunk>
                   </output>
@@ -69,7 +73,7 @@ main() {
         <node>foo</node>
         <type>bool</type>
       </chunk>
-      <chunk>
+      <chunk min="-1" max="10">
         <name>Bar</name>
         <node>bar</node>
         <type>int</type>
@@ -101,6 +105,8 @@ main() {
         expect(prop.inputs['foo'], same(prop.outputs['foo']));
         expect(prop['foo'].writeable, isTrue);
         expect(prop['bar'].writeable, isFalse);
+        expect(prop['bar'].max, 10);
+        expect(prop['bar'].min, -1);
       });
     });
     test('parse()', () async {
@@ -243,6 +249,17 @@ main() {
         prop['foo'].value = 'blah';
         fail('read only values throw on write');
       } on StateError catch (_) {}
+    });
+    test('IntProperty min/max', () {
+      var prop = new Property(
+          'foo', 'foo', PropertyType.int, {'min': '-1', 'max': '10'})
+        ..writeable = true;
+      prop.value = 5;
+      expect(prop.value, 5);
+      prop.value = -100;
+      expect(prop.value, -1, reason: "clamp to min value");
+      prop.value = 100;
+      expect(prop.value, 10, reason: "clamp to max value");
     });
     test('accepts only proper values', () async {
       var prop = new PropertyTree('''

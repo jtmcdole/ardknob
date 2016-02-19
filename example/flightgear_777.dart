@@ -16,6 +16,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:ardknob/ardproto.dart';
+import 'package:ardknob/display.dart';
 import 'package:ardknob/flightgear.dart';
 
 import 'package:logging/logging.dart';

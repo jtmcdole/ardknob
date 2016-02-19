@@ -14,11 +14,11 @@
         <type>float</type>
         <format>%03.3f</format>
       </chunk>
-      <chunk>
+      <chunk min="1" max="360">
         <name>heading-bug</name>
         <node>autopilot/settings/heading-bug-deg</node>
       </chunk>
-      <chunk>
+      <chunk min="0" max="5">
         <name>bank-limit</name>
         <!--
           0: AUTO
@@ -60,7 +60,7 @@
         <node>instrumentation/afds/inputs/FD</node>
         <type>bool</type>
       </chunk>
-      <chunk>
+      <chunk min="-2" max="5">
         <name>auto-brake-knob</name>
         <!--
           -2: RTO
@@ -70,6 +70,7 @@
            5: MAX/AUTO
         -->
         <node>autopilot/autobrake/step</node>
+        <type>int</type>
       </chunk>
       <chunk>
         <name>auto-pilot-disengage</name>
@@ -89,7 +90,7 @@
         <name>auto-throttle-right</name>
         <node>instrumentation/afds/inputs/at-armed[1]</node>
       </chunk>
-      <chunk>
+      <chunk min="0" max="5">
         <name>auto-throttle index</name>
         <node>instrumentation/afds/inputs/autothrottle-index</node>
       </chunk>
