@@ -265,12 +265,12 @@ class IntProperty extends Property {
 
   IntProperty._(name, node, type, att) : super._(name, node, type, att) {
     if (attributes.containsKey('min')) {
-      min = attributes['min'] = int.parse(attributes['min']);
+      min = int.parse(attributes['min']);
     }
     min ??= double.NEGATIVE_INFINITY;
 
     if (attributes.containsKey('max')) {
-      max = attributes['max'] = int.parse(attributes['max']);
+      max = int.parse(attributes['max']);
     }
     max ??= double.INFINITY;
   }
