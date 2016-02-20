@@ -139,7 +139,11 @@ main() {
       int ack = 0x100; // 256 rollover.
       inst.setField(getSym('_ack'), ack);
 
-      var futs = [proto.write([1]), proto.write([2]), proto.write([3])];
+      var futs = [
+        proto.write([1]),
+        proto.write([2]),
+        proto.write([3])
+      ];
 
       // Skip the first one with valid second and non-existant last one.
       port._host..add([1, 2])..add([2, 1]);
