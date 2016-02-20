@@ -28,10 +28,10 @@
 ///      ┌─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┐
 ///      │     size      │    user ack   │
 ///      ├─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┤
-///      │    command    │    data0      │
+///      │    command    │    data1      │
 ///      ├─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┤
 ///      │                               │
-///      │       ... data(size - 5)      │
+///      │       ... data(size - 4)      │
 ///      │                               │
 ///      ├─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┼─┤
 ///      │  flch16-sum2  │  flch16-sum1  │
@@ -50,8 +50,8 @@ class ArdProto {
   /// Maximum size of any one data packet, including any overhead.
   static const int maxPacketSize = 64;
 
-  /// Overhead used for size, command, ackknowldgement, and fletch16 bytes.
-  static const int packetOverhead = 5;
+  /// Overhead used for size, ackknowldgement, and fletch16 bytes.
+  static const int packetOverhead = 4;
 
   /// Maximum size of optional data passed to [write].
   static const int maxDataLength = maxPacketSize - packetOverhead;
@@ -94,14 +94,17 @@ class ArdProto {
     _startReading();
   }
 
-  /// Writes a command and optional data to the [port].
+  /// Writes data to the [port].
   ///
-  /// Completes the returned [Future] with success of this command.
-  Future<bool> write(int command, [List<int> data = const <int>[]]) {
+  /// Completes the returned [Future] with success of this packet.
+  Future<bool> write(List<int> data) {
+    assert(data != null);
+    assert(data.isNotEmpty);
+    int command = data.first;
     if (data.length > maxDataLength)
       return new Future.error(new ArgumentError('Oversized $command write: '
           '${data.length + packetOverhead} > $maxPacketSize'));
-    data = [data.length + 5, (_ack++ & 0xFF), command]..addAll(data);
+    data = [data.length + packetOverhead, _ack++ & 0xFF]..addAll(data);
     int sum = fletcher16(data, data.length);
     int f0 = sum & 0xFF;
     int f1 = (sum >> 8) & 0xFF;

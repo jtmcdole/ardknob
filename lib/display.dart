@@ -24,34 +24,35 @@ class Display {
   Display(this.proto);
 
   /// Updates the physical display with the offscreen buffer.
-  Future<bool> display() => proto.write(0);
+  Future<bool> display() => proto.write([0]);
 
   /// Clears the offscreen buffer.
-  Future<bool> clear() => proto.write(1);
+  Future<bool> clear() => proto.write([1]);
 
   /// Fills the offscreen buffer with a color.
-  Future<bool> fillDisplay(int color) => proto.write(1, _s2b(color));
+  Future<bool> fillDisplay(int color) => proto.write([1]..addAll(_s2b(color)));
 
   /// Moves the curosr to a new (x, y) location for certain display calls.
-  Future<bool> cursor(int x, int y) => proto.write(2, _s2b(x)..addAll(_s2b(y)));
+  Future<bool> cursor(int x, int y) =>
+      proto.write([2]..addAll(_s2b(x))..addAll(_s2b(y)));
 
   /// Changes the text size for any future calls to [text].
-  Future<bool> textSize(int size) => proto.write(3, _s2b(size));
+  Future<bool> textSize(int size) => proto.write([3]..addAll(_s2b(size)));
 
   /// Changes the foreground, and optionally background colors for any future
   /// calls to [text].
   Future<bool> textColor(int fg, [int bg]) => (bg != null)
-      ? proto.write(4, _s2b(fg)..addAll(_s2b(bg)))
-      : proto.write(4, _s2b(fg));
+      ? proto.write([4]..addAll(_s2b(fg))..addAll(_s2b(bg)))
+      : proto.write([4]..addAll(_s2b(fg)));
 
   /// Renders text to the [cursor] location at [textSize] and with colors set by
   /// [textColor].
-  Future<bool> text(String text) => proto.write(5, text.codeUnits);
+  Future<bool> text(String text) => proto.write([5]..addAll(text.codeUnits));
 
   /// Draw a line from (x, y) to (x1, y1) with color.
-  Future<bool> line(int x0, int y0, int x1, int y1, int color) => proto.write(
-      6,
-      _s2b(x0)
+  Future<bool> line(int x0, int y0, int x1, int y1, int color) =>
+      proto.write([6]
+        ..addAll(_s2b(x0))
         ..addAll(_s2b(y0))
         ..addAll(_s2b(x1))
         ..addAll(_s2b(y1))
@@ -61,31 +62,32 @@ class Display {
   Future<bool> triangle(
           int x0, int y0, int x1, int y1, int x2, int y2, int color,
           {bool fill: false}) =>
-      proto.write(
-          fill ? 8 : 7,
-          _s2b(x0)
-            ..addAll(_s2b(y0))
-            ..addAll(_s2b(x1))
-            ..addAll(_s2b(y1))
-            ..addAll(_s2b(x2))
-            ..addAll(_s2b(y2))
-            ..addAll(_s2b(color)));
+      proto.write([fill ? 8 : 7]
+        ..addAll(_s2b(x0))
+        ..addAll(_s2b(y0))
+        ..addAll(_s2b(x1))
+        ..addAll(_s2b(y1))
+        ..addAll(_s2b(x2))
+        ..addAll(_s2b(y2))
+        ..addAll(_s2b(color)));
 
   Future<bool> rectangle(int x, int y, int width, int height, int color,
           {bool fill: false, int radius}) =>
-      proto.write(
-          (fill ? 10 : 9) + ((radius != null) ? 2 : 0),
-          _s2b(x)
-            ..addAll(_s2b(y))
-            ..addAll(_s2b(width))
-            ..addAll(_s2b(height))
-            ..addAll(radius != null ? _s2b(radius) : const <int>[])
-            ..addAll(_s2b(color)));
+      proto.write([(fill ? 10 : 9) + ((radius != null) ? 2 : 0)]
+        ..addAll(_s2b(x))
+        ..addAll(_s2b(y))
+        ..addAll(_s2b(width))
+        ..addAll(_s2b(height))
+        ..addAll(radius != null ? _s2b(radius) : const <int>[])
+        ..addAll(_s2b(color)));
 
   Future<bool> circle(int x, int y, int radius, int color,
           {bool fill: false}) =>
-      proto.write(fill ? 13 : 14,
-          _s2b(x)..addAll(_s2b(y))..addAll(_s2b(radius))..addAll(_s2b(color)));
+      proto.write([fill ? 13 : 14]
+        ..addAll(_s2b(x))
+        ..addAll(_s2b(y))
+        ..addAll(_s2b(radius))
+        ..addAll(_s2b(color)));
 
   /// Draw normal or xmb bitmap (1 bit, 8 pixels per byte.)
   ///
@@ -103,20 +105,19 @@ class Display {
     var work = [];
     for (int i = 0; i < height; i += linesPer) {
       var h = (height - i).clamp(0, linesPer);
-      var fut = proto.write(
-          (background == null ? 15 : 16) + (xmb ? 2 : 0),
-          _s2b(x)
-            ..addAll(_s2b(y + i))
-            ..addAll(_s2b(width))
-            ..addAll(_s2b(h))
-            ..addAll(_s2b(color))
-            ..addAll(background == null ? const <int>[] : _s2b(background))
-            ..addAll(bytes.skip(scan * i).take(h * scan)));
+      var fut = proto.write([(background == null ? 15 : 16) + (xmb ? 2 : 0)]
+        ..addAll(_s2b(x))
+        ..addAll(_s2b(y + i))
+        ..addAll(_s2b(width))
+        ..addAll(_s2b(h))
+        ..addAll(_s2b(color))
+        ..addAll(background == null ? const <int>[] : _s2b(background))
+        ..addAll(bytes.skip(scan * i).take(h * scan)));
       work.add(fut);
     }
     return Future.wait(work).then((work) => work.every((e) => e == true));
   }
 
-  // Return network order bytes for the 16 bits in [short]
+  /// Returns a list of network order bytes for the 16 bits in [short].
   List<int> _s2b(int short) => [(short >> 8) & 0xFF, short & 0xFF];
 }

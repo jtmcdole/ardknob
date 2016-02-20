@@ -49,7 +49,7 @@ main() {
     });
 
     test('appends valid fletcher16 checksum', () async {
-      proto.write(1, [1, 2, 3]);
+      proto.write([1, 1, 2, 3]);
       var cap = verify(port.write(captureAny)).captured;
       expect(cap.length, 1);
       expect(cap[0], isList);
@@ -60,7 +60,7 @@ main() {
 
     test('throws an error when overflowed', () async {
       try {
-        await proto.write(1, new List(ArdProto.maxPacketSize - 4));
+        await proto.write(new List(ArdProto.maxPacketSize - 3));
         fail('maxPacketSize didn\'t throw');
       } catch (e) {
         expect(e, isArgumentError);
@@ -97,17 +97,17 @@ main() {
     test('queues up work to prevent overflows', () {
       expect(waitQ, isList);
       expect(waitQ, isEmpty);
-      proto.write(1, new List<int>.filled(ArdProto.maxPacketSize - 5, 0));
+      proto.write(new List<int>.filled(ArdProto.maxPacketSize - 4, 1));
       expect(proto.bytesOut, equals(ArdProto.maxPacketSize));
-      proto.write(1);
+      proto.write([1]);
       expect(waitQ, isNotEmpty);
       expect(waitQ.length, 1);
     });
 
     test('close', () async {
       var futs = [
-        proto.write(1, new List<int>.filled(ArdProto.maxPacketSize - 5, 0)),
-        proto.write(1, new List<int>.filled(ArdProto.maxPacketSize - 5, 0))
+        proto.write(new List<int>.filled(ArdProto.maxPacketSize - 4, 1)),
+        proto.write(new List<int>.filled(ArdProto.maxPacketSize - 4, 1))
       ];
       expect(waitQ.length, 1);
       expect(ackQ.length, 1);
@@ -123,9 +123,9 @@ main() {
     test('acks', () async {
       // Setup one to flow through, followed by queueing up two more.
       var futs = [
-        proto.write(1, new List<int>.filled(ArdProto.maxPacketSize - 5, 0)),
-        proto.write(2),
-        proto.write(3),
+        proto.write(new List<int>.filled(ArdProto.maxPacketSize - 4, 1)),
+        proto.write([2]),
+        proto.write([3]),
       ];
 
       port._host..add([0, 1])..add([1, 2])..add([2, 3]);
@@ -139,7 +139,7 @@ main() {
       int ack = 0x100; // 256 rollover.
       inst.setField(getSym('_ack'), ack);
 
-      var futs = [proto.write(1), proto.write(2), proto.write(3)];
+      var futs = [proto.write([1]), proto.write([2]), proto.write([3])];
 
       // Skip the first one with valid second and non-existant last one.
       port._host..add([1, 2])..add([2, 1]);
@@ -157,9 +157,9 @@ main() {
         waitQ = inst.getField(getSym('_waitQueue')).reflectee;
         ackQ = inst.getField(getSym('_ackQueue')).reflectee;
         var futs = [
-          proto.write(1),
-          proto.write(2),
-          proto.write(3, new List<int>.filled(ArdProto.maxPacketSize - 5, 0)),
+          proto.write([1]),
+          proto.write([2]),
+          proto.write(new List<int>.filled(ArdProto.maxPacketSize - 4, 3)),
         ];
         var errorFut;
         errorFut = inst.getField(getSym('_errorHoldoff')).reflectee;

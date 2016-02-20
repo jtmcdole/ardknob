@@ -41,7 +41,7 @@ main(List<String> args) async {
 
   var proto = new ArdProto(port);
 
-  var book = new Book('demo', proto, debug: false, pageKnobId: 2)
+  var book = new Book('demo', proto, pageKnobId: 2)
     ..add(new DemoPage('codefu', (page) => page.display.text("codefu")))
     ..add(new DemoPage('was here', (page) => page.display.text("was here")))
     ..add(new DemoPage(
