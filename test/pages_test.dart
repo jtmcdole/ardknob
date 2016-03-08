@@ -31,7 +31,7 @@ main() {
       expect(page.display, isNull);
 
       book.add(page);
-      expect(page.events, [PageEvent.added, book]);
+      expect(page.events, [PageEvent.added, book, PageEvent.onScreen, book]);
       expect(page.book, book);
       expect(page.display, isNotNull);
       expect(book.length, 1);
@@ -39,7 +39,14 @@ main() {
       page.events.clear();
 
       book.add(page);
-      expect(page.events, [PageEvent.removed, book, PageEvent.added, book]);
+      expect(page.events, [
+        PageEvent.removed,
+        book,
+        PageEvent.added,
+        book,
+        PageEvent.onScreen,
+        book
+      ]);
       expect(page.book, book);
       expect(book.length, 1);
 
