@@ -234,7 +234,7 @@ class ArdProto {
         // ipsofacto this is the work.
         var work = _ackQueue.removeAt(0);
         _bytesOut -= work.size;
-        log.info('completed command: $work '
+        log.fine('completed command: $work '
             'duration: ${now - work.sent}');
         work.completer.complete(true);
 

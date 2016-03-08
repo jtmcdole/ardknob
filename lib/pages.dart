@@ -117,6 +117,7 @@ class Book {
     if (_active == null) _active = page;
     page._display = _active == page ? _display : _displayNone;
     page.onEvent(PageEvent.added, this);
+    if (_active == page) page.onEvent(PageEvent.onScreen, this);
     log.info("added $page");
   }
 

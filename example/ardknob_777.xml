@@ -118,6 +118,16 @@
         <type>float</type>
         <format>%03.3f</format>
       </chunk>
+      <chunk min="1" max="360">
+        <name>nav1-radial</name>
+        <node>instrumentation/nav[0]/radials/selected-deg</node>
+        <type>int</type>
+      </chunk>
+      <chunk min="1" max="360">
+        <name>nav2-radial</name>
+        <node>instrumentation/nav[1]/radials/selected-deg</node>
+        <type>int</type>
+      </chunk>
     </output>
     <input>
       <line_separator>newline</line_separator>
@@ -219,6 +229,16 @@
         <node>instrumentation/nav[1]/frequencies/standby-mhz</node>
         <type>float</type>
         <format>%03.3f</format>
+      </chunk>
+      <chunk min="1" max="360">
+        <name>nav1-radial</name>
+        <node>instrumentation/nav[0]/radials/selected-deg</node>
+        <type>int</type>
+      </chunk>
+      <chunk min="1" max="360">
+        <name>nav2-radial</name>
+        <node>instrumentation/nav[1]/radials/selected-deg</node>
+        <type>int</type>
       </chunk>
     </input>
   </generic>
