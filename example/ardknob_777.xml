@@ -96,13 +96,13 @@
       </chunk>
       <chunk>
         <name>nav1-actual</name>
-        <node>instrumentation/nav/frequencies/selected-mhz</node>
+        <node>instrumentation/nav[0]/frequencies/selected-mhz</node>
         <type>float</type>
         <format>%03.3f</format>
       </chunk>
       <chunk>
         <name>nav1-standby</name>
-        <node>instrumentation/nav/frequencies/standby-mhz</node>
+        <node>instrumentation/nav[0]/frequencies/standby-mhz</node>
         <type>float</type>
         <format>%03.3f</format>
       </chunk>
@@ -208,13 +208,13 @@
       </chunk>
       <chunk>
         <name>nav1-actual</name>
-        <node>instrumentation/nav/frequencies/selected-mhz</node>
+        <node>instrumentation/nav[0]/frequencies/selected-mhz</node>
         <type>float</type>
         <format>%03.3f</format>
       </chunk>
       <chunk>
         <name>nav1-standby</name>
-        <node>instrumentation/nav/frequencies/standby-mhz</node>
+        <node>instrumentation/nav[0]/frequencies/standby-mhz</node>
         <type>float</type>
         <format>%03.3f</format>
       </chunk>
