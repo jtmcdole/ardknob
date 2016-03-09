@@ -13,10 +13,12 @@
 // limitations under the License.
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:ardknob/ardproto.dart';
 import 'package:ardknob/display.dart';
+import 'package:ardknob/flightgear.dart';
 import 'package:ardknob/pages.dart';
 
 import 'package:logging/logging.dart';
@@ -43,6 +45,12 @@ main(List<String> args) async {
     exit(-1);
   }
 
+  var xml = await new File('example/ardknob_777.xml').readAsString();
+  var props = new PropertyTree(xml);
+  var bank = props['instrumentation/afds/inputs/bank-limit-switch'];
+  var atl = props['instrumentation/afds/inputs/at-armed'];
+  var atr = props['instrumentation/afds/inputs/at-armed[1]'];
+
   var proto = new ArdProto(port);
   var display = new Display(proto);
 
@@ -56,6 +64,21 @@ main(List<String> args) async {
     ..add(new NavRadioPage(nav1))
     ..add(new NavRadioPage(nav2))
     ..add(new AltitudePage());
+
+  var send = await RawDatagramSocket.bind(InternetAddress.ANY_IP_V4, 1236);
+  props.onUpdate.listen((update) {
+    log.info('sending: $update to 1235');
+    send.send(UTF8.encode(update), InternetAddress.LOOPBACK_IP_V4, 1235);
+  });
+
+  var sock = await RawDatagramSocket.bind(InternetAddress.ANY_IP_V4, 1234);
+  await for (var event in sock) {
+    //print(event);
+    if (event == RawSocketEvent.READ) {
+      Datagram dg = sock.receive();
+      props.parse(dg.data);
+    }
+  }
 }
 
 class NavRadioPage extends Page {
