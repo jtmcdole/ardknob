@@ -119,6 +119,7 @@ class PropertyTree {
 
     outputs = new Map<String, Property>.fromIterable(parseChunks(output),
         key: (item) => item.node);
+
     inputs = new Map<String, Property>();
     var input = gen.findElements('input');
     if (!input.isEmpty) {
@@ -144,6 +145,11 @@ class PropertyTree {
     }
 
     properties = new Map<String, Property>.from(outputs)..addAll(inputs);
+
+    // Add mappings for easier 'name' lookup.
+    properties.addAll(new Map.fromIterable(
+        properties.values.where((item) => item.name != null),
+        key: (item) => item.name));
   }
 
   /// Guards multiple properties being edited by the same task.

@@ -95,14 +95,24 @@ main() {
   </generic>
 </PropertyList>''');
         expect(prop, isNotNull);
-        expect(prop.properties.length, 3);
+        expect(prop.properties.length, 6);
         expect(prop.outputs.length, 2);
         expect(prop.inputs.length, 2);
 
-        expect(prop.outputs.keys, ['foo', 'bar']);
-        expect(prop.inputs.keys, ['zoo', 'foo']);
-        expect(prop.properties.keys, ['foo', 'bar', 'zoo']);
+        expect(prop.outputs.keys, allOf([contains('foo'), contains('bar'),]));
+        expect(prop.inputs.keys, allOf([contains('zoo'), contains('foo'),]));
+        expect(
+            prop.properties.keys,
+            allOf([
+              contains('Zoo'),
+              contains('zoo'),
+              contains('Foo'),
+              contains('foo'),
+              contains('Bar'),
+              contains('bar'),
+            ]));
         expect(prop.inputs['foo'], same(prop.outputs['foo']));
+        expect(prop.properties['Foo'], same(prop.outputs['foo']));
         expect(prop['foo'].writeable, isTrue);
         expect(prop['bar'].writeable, isFalse);
         expect(prop['bar'].max, 10);
