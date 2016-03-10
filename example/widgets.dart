@@ -81,10 +81,12 @@ main(List<String> args) async {
 class NavRadioPage extends Page {
   final Logger log;
   final List widgets;
+  final List props;
   int _selected = 1;
 
   NavRadioPage(String name, Property actual, Property standby, Property radial)
       : widgets = [],
+        props = [],
         log = new Logger('$name-radio'),
         super('$name-radios') {
     var nav1 =
@@ -118,7 +120,9 @@ class NavRadioPage extends Page {
       nav1rad.value = prop.value;
       doWork();
     });
+
     widgets.addAll([nav1, nav1sb, nav1rad]);
+    props.addAll([actual, standby, radial]);
   }
 
   _draw() {
@@ -128,12 +132,14 @@ class NavRadioPage extends Page {
 
   onKnob(KnobAction knob) {
     var rad = widgets[_selected];
+    var prop = props[_selected];
+
     log.info(knob);
     if (knob.id == 0) {
       if (knob.direction == Direction.left) {
-        rad.adjust(-1);
+        prop.value = rad.adjust(-1);
       } else if (knob.direction == Direction.right) {
-        rad.adjust(1);
+        prop.value = rad.adjust(1);
       } else if (knob.direction == Direction.down) {
         _selected = _selected == 1 ? 2 : 1;
         rad.isSelected = false;
@@ -147,8 +153,8 @@ class NavRadioPage extends Page {
         rad.shift(-1);
       } else if (knob.direction == Direction.down && _selected == 1) {
         var swap = widgets[0].value;
-        widgets[0].value = rad.value;
-        rad.value = swap;
+        props[0].value = widgets[0].value = widgets[1].value;
+        props[1].value = widgets[1].value = swap;
       }
     }
     widgets.forEach((e) => e.draw(display));
@@ -308,7 +314,7 @@ abstract class AdjustableWidget<T extends AdjustableValue>
 
   adjust(int amount) {
     dirty = true;
-    _value.adjust(amount);
+    return _value.adjust(amount);
   }
 
   shift(int amount) {
@@ -367,10 +373,11 @@ abstract class AdjustableValue<T extends num> implements Function {
     assert(increments.length == offsets.length);
   }
 
-  adjust(T amount) {
+  T adjust(T amount) {
     amount = value + (increments[digitIndex] * amount);
-    if (amount < min || amount > max) return;
+    if (amount < min || amount > max) return value;
     value = amount;
+    return value;
   }
 
   /// Shifts the [digitIndex] by [amount], wrapping around in either direction.
@@ -403,6 +410,7 @@ class Radial extends AdjustableValue<int> {
   adjust(num amount) {
     super.adjust(amount);
     value %= 360;
+    return value;
   }
 
   String toString() => '$radial'.padLeft(3);
