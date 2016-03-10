@@ -47,9 +47,6 @@ main(List<String> args) async {
 
   var xml = await new File('example/ardknob_777.xml').readAsString();
   var props = new PropertyTree(xml);
-  var bank = props['instrumentation/afds/inputs/bank-limit-switch'];
-  var atl = props['instrumentation/afds/inputs/at-armed'];
-  var atr = props['instrumentation/afds/inputs/at-armed[1]'];
 
   var proto = new ArdProto(port);
   var display = new Display(proto);
@@ -58,11 +55,11 @@ main(List<String> args) async {
 
   display.clear();
   display.textSize(2);
-  var nav1 = {'NAV1': 111.70, 'NAV1-SB': 110.90,};
-  var nav2 = {'NAV2': 113.6, 'NAV2-SB': 111.70,};
   new Book('777', proto, pageKnobId: 2, display: display)
-    ..add(new NavRadioPage(nav1))
-    ..add(new NavRadioPage(nav2))
+    ..add(new NavRadioPage('NAV1', props['nav1-actual'], props['nav1-standby'],
+        props['nav1-radial']))
+    ..add(new NavRadioPage('NAV2', props['nav2-actual'], props['nav2-standby'],
+        props['nav2-radial']))
     ..add(new AltitudePage());
 
   var send = await RawDatagramSocket.bind(InternetAddress.ANY_IP_V4, 1236);
@@ -82,19 +79,51 @@ main(List<String> args) async {
 }
 
 class NavRadioPage extends Page {
+  final Logger log;
   final List widgets;
   int _selected = 1;
 
-  NavRadioPage(Map<String, num> radios)
+  NavRadioPage(String name, Property actual, Property standby, Property radial)
       : widgets = [],
-        super('radios') {
-    int line = 0;
-    radios.forEach((name, freq) {
-      widgets
-          .add(new RadioWidget(0, (line++ * 16), name: name, frequency: freq));
+        log = new Logger('$name-radio'),
+        super('$name-radios') {
+    var nav1 =
+        new RadioWidget(0, 0, name: name, frequency: actual.value ?? 0.0);
+    var nav1sb = new RadioWidget(0, 16,
+        name: '$name-SB', frequency: standby.value ?? 0.0)..isSelected = true;
+    var nav1rad =
+        new RadialWidget(0, 32, name: 'Radial', radial: radial.value ?? 0);
+
+    var workfn;
+    doWork() async {
+      if (workfn != null) return;
+      workfn = new Future.delayed(const Duration(milliseconds: 100), () {});
+      await workfn;
+      workfn = null;
+      _draw();
+    }
+
+    actual.stream.listen((prop) {
+      log.info('update to ${prop.value}');
+      nav1.value = prop.value;
+      doWork();
     });
-    widgets.add(new RadialWidget(0, (line++ * 16), name: 'Radial', radial: 80));
-    widgets.skip(1).first.isSelected = true;
+    standby.stream.listen((prop) {
+      log.info('update to ${prop.value}');
+      nav1sb.value = prop.value;
+      doWork();
+    });
+    radial.stream.listen((prop) {
+      log.info('update to ${prop.value}');
+      nav1rad.value = prop.value;
+      doWork();
+    });
+    widgets.addAll([nav1, nav1sb, nav1rad]);
+  }
+
+  _draw() {
+    widgets.forEach((e) => e.draw(display));
+    display.display();
   }
 
   onKnob(KnobAction knob) {
@@ -289,10 +318,10 @@ abstract class AdjustableWidget<T extends AdjustableValue>
 
   draw(display) {
     if (!dirty) return;
-    log.info("$name: redraw: $value");
+    var string = _value.toString();
+    log.info("$name: redraw: '$string'");
     display.textColor(1, 0);
     display.cursor(x, y);
-    var string = _value.toString();
     display.text(string);
     if (name.isNotEmpty) {
       display.textSize(1);
