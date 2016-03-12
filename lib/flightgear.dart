@@ -74,7 +74,7 @@ class PropertyTree {
     }
     output = output.isEmpty ? [] : output.first.children;
 
-    parseChunks(chunks) {
+    parseChunks(chunks, {bool write: false}) {
       var nodes = [];
       for (var chunk in chunks) {
         if (chunk is! xml.XmlElement) continue;
@@ -110,8 +110,9 @@ class PropertyTree {
               break;
           }
         }
-        var prop =
-            new Property(name, node, type ?? PropertyType.int, attributes);
+        var prop = new Property(
+            name, node, type ?? PropertyType.int, attributes,
+            writeable: write);
         nodes.add(prop);
       }
       return nodes;
@@ -133,15 +134,15 @@ class PropertyTree {
       }
     }
     input = input.isEmpty ? [] : input.first.children;
-    input = parseChunks(input);
+    input = parseChunks(input, write: true);
 
     // Find all the input elements in the output section, because we want to
     // re-use them and allow the user to read back their write.
     for (var chunk in input) {
-      var out = outputs[chunk.node];
-      inputs[chunk.node] = (out ?? chunk)
-        ..writeable = true
-        .._onEdit = _onEdit;
+      inputs[chunk.node] = chunk.._onEdit = _onEdit;
+      if (outputs.containsKey(chunk.node)) {
+        outputs[chunk.node] = chunk;
+      }
     }
 
     properties = new Map<String, Property>.from(outputs)..addAll(inputs);
@@ -174,7 +175,9 @@ class PropertyTree {
     var update = UTF8.decode(data);
     update = update.split(out_separator);
     if (update.length != outputs.values.length) {
-      log.warning('update does not contain all properties ($update)');
+      log.warning('update does not match expected properties. '
+          'update: $update '
+          'expected: ${outputs.values}');
       return;
     }
     for (var prop in outputs.values) prop._update(update.removeAt(0));
@@ -194,7 +197,7 @@ class PropertyTree {
 }
 
 /// Data type representation of a given property in the protocol.
-enum PropertyType { bool, int, float }
+enum PropertyType { bool, int, float, string }
 
 /// Reprsents on node in the [FlightGear property tree](http://wiki.flightgear.org/Property_tree).
 abstract class Property {
@@ -216,10 +219,38 @@ abstract class Property {
   /// by FlightGear transmission.
   get value => _value;
 
+  /// Are [value] updates from Flightgear ignored for [debounceDuration] after
+  /// user edits. Defaults to true for [writeable] properties.
+  bool get debounce => _debounce;
+  set debounce(bool debounce) {
+    if (debounce != _debounce) {
+      _debounce = debounce;
+      _debouncer = null;
+    }
+  }
+
+  bool _debounce;
+
+  /// The last delayed future before updates from Flightgear are allowed.
+  Future _debouncer;
+
+  /// The amount of time to ignore property updates from Flightgear after user
+  /// updates to [value] and [debouce] is true.
+  Duration debounceDuration = new Duration(seconds: 1);
+
   void set value(dynamic value) {
     if (!writeable) throw new StateError('$node is not marked as writeable');
     _value = value;
     if (_onEdit != null) _onEdit(this);
+    if (debounce) {
+      var me;
+      me = _debouncer = new Future.delayed(debounceDuration, () {
+        if (me == _debouncer) {
+          log.fine('debounce done $name');
+          _debouncer = null;
+        }
+      });
+    }
   }
 
   /// When the user edits this value, this callback can be made.i
@@ -228,8 +259,8 @@ abstract class Property {
 
   dynamic _value;
 
-  /// Is this property writeable?
-  bool writeable;
+  /// Was this property found in the <Input> section and thus user editable.
+  final bool writeable;
 
   final StreamController<Property> _streamOutput;
 
@@ -238,23 +269,35 @@ abstract class Property {
   Stream<Property> get stream => _streamOutput.stream;
 
   factory Property(String name, String node, PropertyType type,
-      Map<String, String> attributes) {
-    if (type == PropertyType.int) {
-      return new IntProperty._(name, node, type, attributes);
-    } else if (type == PropertyType.float) {
-      return new NumProperty._(name, node, type, attributes);
-    } else if (type == PropertyType.bool) {
-      return new BoolProperty._(name, node, type, attributes);
+      Map<String, String> attributes,
+      {bool writeable: false}) {
+    var ret;
+    switch (type) {
+      case PropertyType.int:
+        ret = new IntProperty._(name, node, type, attributes, writeable);
+        break;
+      case PropertyType.float:
+        ret = new NumProperty._(name, node, type, attributes, writeable);
+        break;
+      case PropertyType.bool:
+        ret = new BoolProperty._(name, node, type, attributes, writeable);
+        break;
+      default:
+        throw new UnimplementedError('$type not implemented');
     }
+    return ret.._debounce = writeable;
   }
 
-  Property._(this.name, this.node, this.type, this.attributes)
-      : _streamOutput = new StreamController<Property>.broadcast(),
-        writeable = false;
+  Property._(this.name, this.node, this.type, this.attributes, this.writeable)
+      : _streamOutput = new StreamController<Property>.broadcast();
 
   /// Internal update driven by FlightGear.
   void _update(value) {
     if (value != _value) {
+      if (_debouncer != null) {
+        log.info('$this = $value debounced');
+        return;
+      }
       _value = value;
       log.info('$this updated');
       _streamOutput.add(this);
@@ -269,7 +312,8 @@ class IntProperty extends Property {
   /// An optional maximum value.
   num max;
 
-  IntProperty._(name, node, type, att) : super._(name, node, type, att) {
+  IntProperty._(name, node, type, att, bool writeable)
+      : super._(name, node, type, att, writeable) {
     if (attributes.containsKey('min')) {
       min = int.parse(attributes['min']);
     }
@@ -298,7 +342,8 @@ class IntProperty extends Property {
 }
 
 class NumProperty extends Property {
-  NumProperty._(name, node, type, att) : super._(name, node, type, att);
+  NumProperty._(name, node, type, att, bool writeable)
+      : super._(name, node, type, att, writeable);
 
   void set value(value) {
     if (value is! num) throw new StateError('$node is! num');
@@ -317,7 +362,8 @@ class NumProperty extends Property {
 }
 
 class BoolProperty extends Property {
-  BoolProperty._(name, node, type, att) : super._(name, node, type, att);
+  BoolProperty._(name, node, type, att, bool writeable)
+      : super._(name, node, type, att, writeable);
 
   void set value(value) {
     if (value is! bool) throw new StateError('$node is! bool');
