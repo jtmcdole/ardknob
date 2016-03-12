@@ -17,9 +17,20 @@ import 'dart:convert';
 
 import 'package:ardknob/flightgear.dart';
 
+import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
+Stopwatch _start = new Stopwatch()..start();
+
 main() {
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((LogRecord rec) {
+    print('${_start.elapsed}: ${rec.level.name}: [${rec.loggerName}] '
+        '${rec.message}');
+  });
+
+  var log = new Logger('test');
+
   group('PropertyTree', () {
     group('constructor', () {
       test('throws on invalid data', () {
@@ -52,6 +63,7 @@ main() {
                 </generic>
               </PropertyList>'''), 'invalid type');
       });
+
       test('works with empty properties', () {
         var prop = new PropertyTree('''
             <PropertyList>
@@ -61,6 +73,7 @@ main() {
         expect(prop, isNotNull);
         expect(prop.properties, isEmpty);
       });
+
       test('works with output / input properties', () async {
         var prop = new PropertyTree('''
 <PropertyList>
@@ -119,6 +132,7 @@ main() {
         expect(prop['bar'].min, -1);
       });
     });
+
     test('parse()', () async {
       var prop = new PropertyTree('''
 <PropertyList>
@@ -198,6 +212,68 @@ main() {
       expect(prop['baz'].value, 0);
       expect(prop['qux'].value, 0.0);
     });
+
+    test('debounce property', () async {
+      log.info('debounce test');
+      var prop = new PropertyTree('''
+<PropertyList>
+  <generic>
+    <output>
+      <line_separator>newline</line_separator>
+      <var_separator>;</var_separator>
+      <chunk>
+        <name>Foo</name>
+        <node>foo</node>
+        <type>bool</type>
+      </chunk>
+    </output>
+    <input>
+      <line_separator>newline</line_separator>
+      <var_separator>/</var_separator>
+      <chunk>
+        <name>Foo</name>
+        <node>foo</node>
+        <type>bool</type>
+      </chunk>
+    </input>
+  </generic>
+</PropertyList>''');
+      int count = 0;
+      var foo = prop['foo'];
+      foo.stream.listen((val) {
+        expect(val, same(prop.outputs['foo']));
+        count++;
+      });
+
+      foo.debounce = false;
+      prop.parse(UTF8.encode('1'));
+      expect(foo.value, isTrue);
+
+      await new Future.value();
+      expect(count, 1, reason: 'async stream update for foo');
+
+      foo.value = false;
+      prop.parse(UTF8.encode('1'));
+      await new Future.value();
+      expect(count, 2, reason: 'non-debounced foo is updated');
+      expect(foo.value, isTrue);
+
+      foo.debounce = true;
+      var delay = foo.debounceDuration = const Duration(milliseconds: 10);
+
+      foo.value = false;
+      prop.parse(UTF8.encode('1'));
+      await new Future.value();
+      expect(count, 2, reason: 'debounced foo is ignored');
+      expect(foo.value, isFalse);
+
+      await new Future.delayed(delay, () {});
+      prop.parse(UTF8.encode('1'));
+      await new Future.value();
+      expect(count, 3, reason: 'debounced foo is updated after $delay');
+      expect(foo.value, isTrue);
+    });
+
     test('inputMessage', () async {
       var prop = new PropertyTree('''
 <PropertyList>
@@ -239,7 +315,14 @@ main() {
           reason: 'stacked property writes only signal one update');
     });
   });
+
   group('Property', () {
+    test('constructor throws', () async {
+      expect(() => new Property('codefu', 'codefu', PropertyType.string, null),
+          throwsUnimplementedError,
+          reason: 'Bad type throws');
+    });
+
     test('throws when non-writable', () async {
       var prop = new PropertyTree('''
 <PropertyList>
@@ -260,10 +343,11 @@ main() {
         fail('read only values throw on write');
       } on StateError catch (_) {}
     });
+
     test('IntProperty min/max', () {
       var prop = new Property(
-          'foo', 'foo', PropertyType.int, {'min': '-1', 'max': '10'})
-        ..writeable = true;
+          'foo', 'foo', PropertyType.int, {'min': '-1', 'max': '10'},
+          writeable: true);
       prop.value = 5;
       expect(prop.value, 5);
       prop.value = -100;
@@ -271,6 +355,7 @@ main() {
       prop.value = 100;
       expect(prop.value, 10, reason: "clamp to max value");
     });
+
     test('accepts only proper values', () async {
       var prop = new PropertyTree('''
 <PropertyList>
