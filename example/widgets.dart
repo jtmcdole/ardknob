@@ -24,15 +24,15 @@ import 'package:ardknob/pages.dart';
 import 'package:logging/logging.dart';
 import 'package:serial_port/serial_port.dart';
 
-DateTime _start = new DateTime.now();
+Stopwatch _start = new Stopwatch()..start();
 
 Logger log = new Logger('main');
 
 main(List<String> args) async {
   Logger.root.level = Level.INFO;
   Logger.root.onRecord.listen((LogRecord rec) {
-    print('${new DateTime.now().difference(_start)}: ${rec.level.name}: '
-        '[${rec.loggerName}] ${rec.message}');
+    print('${_start.elapsed}: ${rec.level.name}: [${rec.loggerName}] '
+        '${rec.message}');
   });
 
   var port = args.isEmpty ? "COM3" : args.first;
@@ -60,7 +60,7 @@ main(List<String> args) async {
         props['nav1-radial']))
     ..add(new NavRadioPage('NAV2', props['nav2-actual'], props['nav2-standby'],
         props['nav2-radial']))
-    ..add(new AltitudePage());
+    ..add(new AltitudePage(props['altitude-ft']));
 
   var send = await RawDatagramSocket.bind(InternetAddress.ANY_IP_V4, 1236);
   props.onUpdate.listen((update) {
@@ -175,6 +175,7 @@ class NavRadioPage extends Page {
 
 class AltitudePage extends Page {
   final List widgets;
+  final List props;
   final AltitudeWidget altitude;
 
   int _selected = 0;
@@ -182,24 +183,42 @@ class AltitudePage extends Page {
 
   List<String> switchNames = <String>["FOO", "BAR", "BAZ", "CODEFU"];
 
-  AltitudePage()
+  AltitudePage(Property altitude)
       : widgets = [],
-        altitude = new AltitudeWidget(0, 0, name: 'alt'),
+        props = [],
+        this.altitude = new AltitudeWidget(0, 0, name: 'alt'),
         super('altitude') {
     widgets
-      ..add(altitude)
+      ..add(this.altitude)
       ..add(new SwitchWidget(0, 16, name: switchNames.first));
     widgets[_selected].isSelected = true;
+    props.add(altitude);
+
+    var workfn;
+    doWork() async {
+      if (workfn != null) return;
+      workfn = new Future.delayed(const Duration(milliseconds: 100), () {});
+      await workfn;
+      workfn = null;
+      _draw();
+    }
+
+    altitude.stream.listen((prop) {
+      log.info('update to ${prop.value}');
+      this.altitude.value = prop.value;
+      doWork();
+    });
   }
 
   onKnob(KnobAction knob) {
     var sel = widgets[_selected];
     if (knob.id == 0) {
       if (sel is AdjustableWidget) {
+        var prop = props[_selected];
         if (knob.direction == Direction.left) {
-          altitude.adjust(-1);
+          prop.value = altitude.adjust(-1);
         } else if (knob.direction == Direction.right) {
-          altitude.adjust(1);
+          prop.value = altitude.adjust(1);
         } else if (knob.direction == Direction.down) {
           altitude.shift(1);
         }
@@ -234,6 +253,11 @@ class AltitudePage extends Page {
       }
       display.display();
     }
+  }
+
+  _draw() {
+    widgets.forEach((e) => e.draw(display));
+    display.display();
   }
 }
 
