@@ -9,11 +9,24 @@
         <node>autopilot/settings/target-speed-kt</node>
       </chunk>
       <chunk>
+        <name>flight-path-angle</name>
+        <node>autopilot/settings/flight-path-angle</node>
+        <type>float</type>
+        <format>%03.3f</format>
+      </chunk>
+      <chunk>
+        <name>vertical-speed-fpm</name>
+        <node>autopilot/settings/vertical-speed-fpm</node>
+        <type>int</type>
+      </chunk>
+      <!--
+      <chunk>
         <name>speed-mach</name>
         <node>autopilot/settings/target-speed-mach</node>
         <type>float</type>
         <format>%03.3f</format>
       </chunk>
+      -->
       <chunk min="1" max="360">
         <name>heading-bug</name>
         <node>autopilot/settings/heading-bug-deg</node>
@@ -137,11 +150,24 @@
         <node>autopilot/settings/target-speed-kt</node>
       </chunk>
       <chunk>
+        <name>flight-path-angle</name>
+        <node>autopilot/settings/flight-path-angle</node>
+        <type>float</type>
+        <format>%03.3f</format>
+      </chunk>
+      <chunk>
+        <name>vertical-speed-fpm</name>
+        <node>autopilot/settings/vertical-speed-fpm</node>
+        <type>int</type>
+      </chunk>
+      <!--
+      <chunk>
         <name>speed-mach</name>
         <node>autopilot/settings/target-speed-mach</node>
         <type>float</type>
         <format>%03.3f</format>
       </chunk>
+      -->
       <chunk>
         <name>heading-bug</name>
         <node>autopilot/settings/heading-bug-deg</node>

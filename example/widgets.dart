@@ -307,7 +307,7 @@ class RadioWidget extends AdjustableWidget<RadioFrequency> {
 class RadialWidget extends AdjustableWidget<Radial> {
   RadialWidget(int x, int y, {name: '', num radial: 80})
       : super(x, y, name: name) {
-    _value = new Radial()..value = radial - 1;
+    _value = new Radial()..value = radial;
   }
 }
 
@@ -399,8 +399,7 @@ abstract class AdjustableValue<T extends num> implements Function {
 
   T adjust(T amount) {
     amount = value + (increments[digitIndex] * amount);
-    if (amount < min || amount > max) return value;
-    value = amount;
+    if (amount >= min && amount <= max) value = amount;
     return value;
   }
 
@@ -425,7 +424,7 @@ class RadioFrequency extends AdjustableValue<num> {
 }
 
 class Radial extends AdjustableValue<int> {
-  int get radial => value + 1; // we want 1 to 360
+  int get radial => value;
 
   Radial() : super(increments: const [1, 10], offsets: const [2, 1]);
 
@@ -433,7 +432,8 @@ class Radial extends AdjustableValue<int> {
   /// wrapping around after 360.
   adjust(num amount) {
     super.adjust(amount);
-    value %= 360;
+    // Keep in the range: 1..360
+    if (value < 1 || value > 360) value = ((value - 1) % 360) + 1;
     return value;
   }
 
