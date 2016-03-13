@@ -261,6 +261,42 @@ class AltitudePage extends Page {
   }
 }
 
+class SpeedPage extends Page {
+  final List widgets;
+  final List props;
+  final SpeedWidget speed;
+
+  int _selected = 0;
+  int _button = 0;
+
+  SpeedPage(
+      Property speed, Property atArmed, Property atArmLeft, Property atArmRight)
+      : widgets = [],
+        props = [],
+        this.altitude = new AltitudeWidget(0, 0, name: 'alt'),
+        super('speed') {}
+
+  onKnob(KnobAction knob) {
+    var sel = widgets[_selected];
+  }
+
+  onEvent(PageEvent event, var data) {
+    if (event == PageEvent.onScreen) {
+      display.clear();
+      for (var widget in widgets) {
+        widget.dirty = true;
+        widget.draw(display);
+      }
+      display.display();
+    }
+  }
+
+  _draw() {
+    widgets.forEach((e) => e.draw(display));
+    display.display();
+  }
+}
+
 abstract class Widget {
   int x;
   int y;
@@ -315,6 +351,13 @@ class AltitudeWidget extends AdjustableWidget<Altitude> {
   AltitudeWidget(int x, int y, {name: '', num altitude: 10000})
       : super(x, y, name: name) {
     _value = new Altitude()..value = altitude;
+  }
+}
+
+class SpeedWidget extends AdjustableWidget<PaddedInt> {
+  SpeedWidget(int x, int y, {name: '', int speed: 200})
+      : super(x, y, name: name) {
+    _value = new PaddedInt()..value = speed;
   }
 }
 
@@ -450,7 +493,18 @@ class Altitude extends AdjustableValue<int> {
             min: 0,
             max: 60000);
 
-  String toString() => '$value'.padLeft(5); // 35000
+  String toString() => '$value'.padLeft(5);
+}
+
+/// Generic int value
+class PaddedInt extends AdjustableValue<int> {
+  final int pad;
+
+  PaddedInt({int pad: 3})
+      : this.pad = pad,
+        super(increments: [1], offsets: [pad - 1], min: 0, max: 60000);
+
+  String toString() => '$value'.padLeft(pad);
 }
 
 class Switch {
