@@ -60,6 +60,8 @@ main(List<String> args) async {
         props['nav1-radial']))
     ..add(new NavRadioPage('NAV2', props['nav2-actual'], props['nav2-standby'],
         props['nav2-radial']))
+    ..add(new SpeedPage(props['target-speed'], props['auto-throttle index'],
+        props['auto-throttle-left'], props['auto-throttle-right']))
     ..add(new AltitudePage(props['altitude-ft']));
 
   var send = await RawDatagramSocket.bind(InternetAddress.ANY_IP_V4, 1236);
@@ -265,16 +267,50 @@ class SpeedPage extends Page {
   final List widgets;
   final List props;
   final SpeedWidget speed;
+  final SwitchWidget atLeft;
+  final SwitchWidget atRight;
+  final SwitchWidget atArmed;
 
   int _selected = 0;
   int _button = 0;
 
-  SpeedPage(
-      Property speed, Property atArmed, Property atArmLeft, Property atArmRight)
+  SpeedPage(Property speed, Property atArmed, Property atLeft, Property atRight)
       : widgets = [],
         props = [],
-        this.altitude = new AltitudeWidget(0, 0, name: 'alt'),
-        super('speed') {}
+        this.speed = new SpeedWidget(48, 0, name: 'speed'),
+        this.atArmed = new SwitchWidget(15, 16, name: 'AT-ARM'),
+        this.atLeft = new SwitchWidget(0, 38, name: 'ATL'),
+        this.atRight = new SwitchWidget(64, 38, name: 'ATR'),
+        super('speed') {
+    widgets
+      ..add(this.speed)
+      ..add(this.atArmed)
+      ..add(this.atLeft)
+      ..add(this.atRight);
+    widgets[_selected].isSelected = true;
+    props..add(speed)..add(atArmed)..add(atLeft)..add(atRight);
+
+    var workfn;
+    doWork() async {
+      if (workfn != null) return;
+      workfn = new Future.delayed(const Duration(milliseconds: 100), () {});
+      await workfn;
+      workfn = null;
+      _draw();
+    }
+
+    streamIt(prop, value) {
+      prop.stream.listen((prop) {
+        log.info('update to ${prop.value}');
+        value.value = prop.value;
+        doWork();
+      });
+    }
+    streamIt(speed, this.speed);
+    streamIt(atArmed, this.atArmed);
+    streamIt(atRight, this.atRight);
+    streamIt(atLeft, this.atLeft);
+  }
 
   onKnob(KnobAction knob) {
     var sel = widgets[_selected];
