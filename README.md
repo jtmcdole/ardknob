@@ -99,3 +99,7 @@ would look like:
   │zz╙──────╜00│      │zzzzzz000000│
   └────────────┘      └────────────┘
 ```
+
+## Work In Progress
+
+Currently experimenting with examples/widgets for my own board that has 3 rotary encoders that also act as push buttons. Mostly working through widgets and the 128x64 oled. When it's done, I'll make a few more libraries...
