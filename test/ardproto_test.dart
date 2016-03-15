@@ -196,8 +196,14 @@ main() {
 
   test('KnobAction', () {
     var action = new KnobAction(10, Direction.down);
+    expect(action.isButton, isTrue);
+    expect(action.isRotation, isFalse);
     action = action.toString();
     expect(new RegExp(r'Knob\d+\(Direction\.down\)').hasMatch(action), isTrue);
+
+    action = new KnobAction(10, Direction.right);
+    expect(action.isButton, isFalse);
+    expect(action.isRotation, isTrue);
   });
 }
 

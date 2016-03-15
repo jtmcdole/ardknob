@@ -264,6 +264,9 @@ class KnobAction {
   final int id;
   final Direction direction;
 
+  bool get isRotation => direction.index < Direction.down.index;
+  bool get isButton => direction.index > Direction.right.index;
+
   KnobAction(this.id, this.direction);
 
   String toString() => 'Knob$id($direction)';
