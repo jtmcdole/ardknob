@@ -326,7 +326,7 @@ class IntProperty extends Property {
   }
 
   void set value(value) {
-    if (value is! int) throw new StateError('$node is! integer');
+    if (value is! int) throw new StateError('$node: $value is! integer');
     super.value = value.clamp(min, max);
   }
 
@@ -346,7 +346,7 @@ class NumProperty extends Property {
       : super._(name, node, type, att, writeable);
 
   void set value(value) {
-    if (value is! num) throw new StateError('$node is! num');
+    if (value is! num) throw new StateError('$node: $value is! num');
     super.value = value;
   }
 
@@ -366,7 +366,7 @@ class BoolProperty extends Property {
       : super._(name, node, type, att, writeable);
 
   void set value(value) {
-    if (value is! bool) throw new StateError('$node is! bool');
+    if (value is! bool) throw new StateError('$node: $value is! bool');
     super.value = value;
   }
 

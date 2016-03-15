@@ -80,7 +80,30 @@ main(List<String> args) async {
   }
 }
 
-class NavRadioPage extends Page {
+abstract class WidgetPage extends Page {
+  List get widgets;
+
+  WidgetPage(String name) : super(name);
+
+  bool draw() {
+    var dirty = false;
+    for (var widget in widgets) {
+      dirty = widget.draw(display) || dirty;
+    }
+    if (dirty) display.display();
+    return dirty;
+  }
+
+  onEvent(PageEvent event, var data) {
+    if (event == PageEvent.onScreen) {
+      display.clear();
+      for (var widget in widgets) widget.dirty = true;
+      draw();
+    }
+  }
+}
+
+class NavRadioPage extends WidgetPage {
   final Logger log;
   final List widgets;
   final List props;
@@ -104,7 +127,7 @@ class NavRadioPage extends Page {
       workfn = new Future.delayed(const Duration(milliseconds: 100), () {});
       await workfn;
       workfn = null;
-      _draw();
+      draw();
     }
 
     actual.stream.listen((prop) {
@@ -125,11 +148,6 @@ class NavRadioPage extends Page {
 
     widgets.addAll([nav1, nav1sb, nav1rad]);
     props.addAll([actual, standby, radial]);
-  }
-
-  _draw() {
-    widgets.forEach((e) => e.draw(display));
-    display.display();
   }
 
   onKnob(KnobAction knob) {
@@ -159,23 +177,11 @@ class NavRadioPage extends Page {
         props[1].value = widgets[1].value = swap;
       }
     }
-    widgets.forEach((e) => e.draw(display));
-    display.display();
-  }
-
-  onEvent(PageEvent event, var data) {
-    if (event == PageEvent.onScreen) {
-      display.clear();
-      for (var radio in widgets) {
-        radio.dirty = true;
-        radio.draw(display);
-      }
-      display.display();
-    }
+    draw();
   }
 }
 
-class AltitudePage extends Page {
+class AltitudePage extends WidgetPage {
   final List widgets;
   final List props;
   final AltitudeWidget altitude;
@@ -202,7 +208,7 @@ class AltitudePage extends Page {
       workfn = new Future.delayed(const Duration(milliseconds: 100), () {});
       await workfn;
       workfn = null;
-      _draw();
+      draw();
     }
 
     altitude.stream.listen((prop) {
@@ -242,34 +248,17 @@ class AltitudePage extends Page {
         widgets[_selected].isSelected = true;
       }
     }
-    widgets.forEach((e) => e.draw(display));
-    display.display();
-  }
-
-  onEvent(PageEvent event, var data) {
-    if (event == PageEvent.onScreen) {
-      display.clear();
-      for (var radio in widgets) {
-        radio.dirty = true;
-        radio.draw(display);
-      }
-      display.display();
-    }
-  }
-
-  _draw() {
-    widgets.forEach((e) => e.draw(display));
-    display.display();
+    draw();
   }
 }
 
-class SpeedPage extends Page {
+class SpeedPage extends WidgetPage {
   final List widgets;
   final List props;
   final SpeedWidget speed;
+  final SwitchWidget atArmed;
   final SwitchWidget atLeft;
   final SwitchWidget atRight;
-  final SwitchWidget atArmed;
 
   int _selected = 0;
   int _button = 0;
@@ -278,17 +267,13 @@ class SpeedPage extends Page {
       : widgets = [],
         props = [],
         this.speed = new SpeedWidget(48, 0, name: 'speed'),
-        this.atArmed = new SwitchWidget(15, 16, name: 'AT-ARM'),
+        this.atArmed = new SwitchWidget(15, 16, name: 'AT-ARM', states: [0, 5]),
         this.atLeft = new SwitchWidget(0, 38, name: 'ATL'),
         this.atRight = new SwitchWidget(64, 38, name: 'ATR'),
         super('speed') {
-    widgets
-      ..add(this.speed)
-      ..add(this.atArmed)
-      ..add(this.atLeft)
-      ..add(this.atRight);
+    widgets.addAll([this.speed, this.atArmed, this.atLeft, this.atRight]);
     widgets[_selected].isSelected = true;
-    props..add(speed)..add(atArmed)..add(atLeft)..add(atRight);
+    props.addAll([speed, atArmed, atLeft, atRight]);
 
     var workfn;
     doWork() async {
@@ -296,7 +281,7 @@ class SpeedPage extends Page {
       workfn = new Future.delayed(const Duration(milliseconds: 100), () {});
       await workfn;
       workfn = null;
-      _draw();
+      draw();
     }
 
     streamIt(prop, value) {
@@ -314,22 +299,29 @@ class SpeedPage extends Page {
 
   onKnob(KnobAction knob) {
     var sel = widgets[_selected];
-  }
+    var prop = props[_selected];
 
-  onEvent(PageEvent event, var data) {
-    if (event == PageEvent.onScreen) {
-      display.clear();
-      for (var widget in widgets) {
-        widget.dirty = true;
-        widget.draw(display);
+    if (knob.id == 0) {
+      if (knob.isRotation && sel == speed) {
+        prop.value = sel.adjust(knob.direction == Direction.left ? -1 : 1);
       }
-      display.display();
+    } else if (knob.id == 1) {
+      if (knob.isRotation) {
+        sel.isSelected = false;
+        _selected =
+            (knob.direction == Direction.left ? --_selected : ++_selected) %
+                widgets.length;
+        sel = widgets[_selected]..isSelected = true;
+      } else if (knob.direction == Direction.down) {
+        if (_selected == 0) {
+          // Let down on speed also flip AT-ARMED
+          prop = props[1];
+          sel = widgets[1];
+        }
+        prop.value = (sel..flip()).state;
+      }
     }
-  }
-
-  _draw() {
-    widgets.forEach((e) => e.draw(display));
-    display.display();
+    draw();
   }
 }
 
@@ -341,7 +333,7 @@ abstract class Widget {
   Widget.at(this.x, this.y);
 
   bool dirty = true;
-  draw(Display display);
+  bool draw(Display display) => false;
 }
 
 abstract class SelectableWidget extends Widget {
@@ -358,12 +350,14 @@ class TextLabel extends Widget {
   String text;
   TextLabel(int x, int y, this.text) : super.at(x, y);
 
-  draw(display) {
-    if (!dirty) return;
+  @override
+  bool draw(display) {
+    if (!dirty) return false;
 
     display.textColor(1, 0);
     display.cursor(x, y);
     display.text(text);
+    return true;
   }
 }
 
@@ -425,8 +419,9 @@ abstract class AdjustableWidget<T extends AdjustableValue>
     _value.shift(amount);
   }
 
-  draw(display) {
-    if (!dirty) return;
+  @override
+  bool draw(display) {
+    if (!dirty) return false;
     var string = _value.toString();
     log.info("$name: redraw: '$string'");
     display.textColor(1, 0);
@@ -445,6 +440,7 @@ abstract class AdjustableWidget<T extends AdjustableValue>
       display.text('_');
     }
     dirty = false;
+    return true;
   }
 }
 
@@ -549,8 +545,9 @@ class Switch {
   bool get value => _value;
   bool _value;
 
-  flip([bool value]) {
+  bool flip([bool value]) {
     _value = (value ?? !_value);
+    return _value;
   }
 }
 
@@ -571,12 +568,25 @@ class SwitchWidget extends SelectableWidget with Switch {
 
   String _name;
 
-  flip([bool value]) {
+  /// Two position list containing user defined values that are returned via
+  /// [state] depending on the [value].
+  List states;
+
+  /// User defined state of this switch.
+  get state => states[_value == false ? 0 : 1];
+
+  set value(val) {
     dirty = true;
-    super.flip(value);
+    _value = val == true || (val is num && val > 0);
   }
 
-  SwitchWidget(int x, int y, {String name: '', bool value: false})
+  bool flip([bool value]) {
+    dirty = true;
+    return super.flip(value);
+  }
+
+  SwitchWidget(int x, int y,
+      {String name: '', bool value: false, this.states: const [0, 1]})
       : _height = 16 + 2 {
     _value = value;
     this.name = name;
@@ -585,9 +595,10 @@ class SwitchWidget extends SelectableWidget with Switch {
     this.y = y;
   }
 
-  draw(display) {
-    if (!dirty) return;
-    log.info("$name: redraw");
+  @override
+  bool draw(display) {
+    if (!dirty) return false;
+    log.info("$name: redraw : $state $isSelected");
     // clear the area of the switch
     display.rectangle(x, y, _lastDrawWidth, height, 0, fill: true, radius: 0);
     _lastDrawWidth = width;
@@ -598,5 +609,6 @@ class SwitchWidget extends SelectableWidget with Switch {
     display.cursor(x + 1, y + 2);
     display.text(isSelected ? '[$name]' : ' $name');
     dirty = false;
+    return true;
   }
 }
