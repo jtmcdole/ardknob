@@ -488,11 +488,20 @@ class RadioFrequency extends AdjustableValue<num> {
   num get frequency => value;
   set frequency(num value) => this.value = value;
 
+  @override
+  num adjust(num amount) {
+    amount = (value * 100).round() + (increments[digitIndex] * amount);
+    amount /= 100;
+    if (amount >= min && amount <= max) value = amount;
+    value = (value * 1000).toInt() / 1000;
+    return value;
+  }
+
   RadioFrequency()
       : super(
             max: 999.99,
             min: 0,
-            increments: const [0.01, 0.1, 1, 10, 100],
+            increments: const [1, 10, 100, 1000, 10000],
             offsets: const [5, 4, /* 3 = . */ 2, 1, 0]);
 
   String toString() => value.toStringAsFixed(2).padLeft(6);
